@@ -9,26 +9,16 @@ Current IANA database version: **2021e**
    get-timezone-data 'America/New_York'; # Obtain timezone data for the US's Eastern time
 ```
 
-The timezone data is of type `Timezones::ZoneInfo::State` used with other methods.
+The timezone data is of type `Timezones::ZoneInfo::State` used with other methods. The identifier is the Olson ID for the zone.
 
-There are two main functions that work with timezones that you are likely to want to use:
+There are two main functions (in `Timezones::ZoneInfo::Routines`) that work with timezones that you are likely to want to use:
 
   * **`sub localsub (State $tz-data, Int $posix-timestamp, :$leapadjusted = False --> Time)`**  
   Given a POSIX time stamp, provides the associated date/time (in a `Time` structure) for the timezone.  Passing `:leapadjusted` indicates that leapseconds are already included in the timestamp (this is not POSIX standard, but may be preferable for some applications)
   * **`sub mktime (State $tz-data, Time $tm-struct, :$leapadjust = False --> Time)`**  
   ***(NYI)*** Given a tm structure (`Timezones::ZoneInfo::Time`), provides the associated POSIX timestamp and GMT offsets.  Pay close attention to the `dst` attribute: use `1` or `0` if you know the time to be in daylight savings time or not, use `-1` if you are not sure.  Passing `:leapadjust` will include leap seconds in the timestamp (not POSIX standard, but may be preferable for some applications). 
 
-Given a `DateTime` object from Raku, to interpret it in a given timezone, run it through the `localsub` \*ahem* sub:
-
-```raku
-my $us-east  = get-timezone-data 'America/New_York';
-my $datetime = DateTime.now;
-my $time     = localsub $us-east, $datetime.posix;
-```
-
-The `localsub` method takes a `State` value and a POSIX timestamp.  POSIX timestamps do *not* include leapstamps (they actually repeat for leapseconds).  If you have received a timestamp that does have leapseconds already taken into account, use `:leapadjusted` to avoid time calculation errors.
-See documentation below for the format of `$time`.  Convenience methods may be written down the road, but in general, these methods are expected to be used by module authors.
-
+These are more meant to be used by developers than end users, and convenience methods (or other modules) are intended to call these instead.
 # Class reference
 
 ### Timezones::ZoneInfo::Time
