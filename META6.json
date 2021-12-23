@@ -1,10 +1,10 @@
 {
-  "name": "TimezonesData",
+  "name": "Timezones::ZoneInfo",
   "description": "Write me!",
-  "version": "0.1",
+  "version": "0.1.1",
   "perl": "6.*",
   "authors": [
-    "Write me!"
+    "Matthew Stuckwisch"
   ],
   "auth": "Write me!",
   "depends": [],
@@ -13,10 +13,11 @@
   "provides": {
     "Timezones::ZoneInfo": "lib/Timezones/ZoneInfo.rakumod",
     "Timezones::ZoneInfo::ConvRule": "lib/Timezones/ZoneInfo.rakumod",
-    "Timezones::ZoneInfo::LeapSecInfo": "lib/Timezones/LeapSecInfo.rakumod",
-    "Timezones::ZoneInfo::Link": "lib/Timezones/ZoneInfo.rakumod",
-    "Timezones::ZoneInfo::State": "lib/Timezones/ZoneInfo.rakumod",
-    "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo.rakumod"
+    "Timezones::ZoneInfo::LeapSecInfo": "lib/Timezones/ZoneInfo/LeapSecInfo.rakumod",
+    "Timezones::ZoneInfo::Link": "lib/Timezones/ZoneInfo/Link.rakumod",
+    "Timezones::ZoneInfo::State": "lib/Timezones/ZoneInfo/State.rakumod",
+    "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo/Time.rakumod",
+    "Timezones::ZoneInfo::TransTimeInfo": "lib/Timezones/ZoneInfo/TransTimeInfo.rakumod"
   },
   "resources": [
     "update-tz-database.raku",
