@@ -52,9 +52,9 @@ my int64 $TIME_T_MAX     =  2**63 - 1;
 my int64 $LONG_MIN       = -2**63;
 my int64 $LONG_MAX       =  2**63 - 1;
 
-# from localtime.c
-my int32 @year_lengths[2]      = 365, 366;
-my int32 @mon_lengths[2,12]    = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+# from localtime.c, should be int32
+my @year_lengths      = 365, 366;
+my @mon_lengths    = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
 							     [ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 my int64 $WRONG = -1;
 
@@ -62,12 +62,9 @@ my int64 $WRONG = -1;
 my int32 $TZ_MAX_TYPES = 256;
 
 
-
 use Timezones::ZoneInfo::State;
 use Timezones::ZoneInfo::TransTimeInfo;
 use Timezones::ZoneInfo::Time;
-#use Timezones::ZoneInfo::Constants;
-
 use Timezones::ZoneInfo::LeapSecInfo;
 
 #| These variables names match localtime's localsub's
@@ -641,7 +638,6 @@ sub time2sub (
 	}
 	return $t;
 }
-
 
 
 sub normalize_overflow(int16 $tensptr is rw, int16 $unitsptr is rw, int16 $base)

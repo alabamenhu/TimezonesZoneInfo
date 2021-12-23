@@ -1,26 +1,29 @@
 {
   "name": "Timezones::ZoneInfo",
-  "description": "Write me!",
-  "version": "0.1.1",
+  "description": "A module providing timezone data and routines, based on IANA’s tz database and code",
+  "version": "0.1.2",
   "perl": "6.*",
+  "meta-version": "0",
   "authors": [
-    "Matthew Stuckwisch"
+    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
   ],
-  "auth": "Write me!",
-  "depends": [],
+  "auth": "github:alabamenhu",
+  "depends": {},
   "build-depends": [],
-  "test-depends": [],
+  "test-depends": [
+    "Test"
+  ],
   "provides": {
     "Timezones::ZoneInfo": "lib/Timezones/ZoneInfo.rakumod",
-    "Timezones::ZoneInfo::ConvRule": "lib/Timezones/ZoneInfo.rakumod",
+    "Timezones::ZoneInfo::ConvRule": "lib/Timezones/ZoneInfo/ConvRule.rakumod",
     "Timezones::ZoneInfo::LeapSecInfo": "lib/Timezones/ZoneInfo/LeapSecInfo.rakumod",
     "Timezones::ZoneInfo::Link": "lib/Timezones/ZoneInfo/Link.rakumod",
+    "Timezones::ZoneInfo::Routines": "lib/Timezones/ZoneInfo/Routines.rakumod",
     "Timezones::ZoneInfo::State": "lib/Timezones/ZoneInfo/State.rakumod",
     "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo/Time.rakumod",
     "Timezones::ZoneInfo::TransTimeInfo": "lib/Timezones/ZoneInfo/TransTimeInfo.rakumod"
   },
   "resources": [
-    "update-tz-database.raku",
     "TZif/Indian/Mauritius",
     "TZif/Indian/Chagos",
     "TZif/Indian/Mayotte",
@@ -101,6 +104,7 @@
     "TZif/Pacific/Truk",
     "TZif/Pacific/Pitcairn",
     "TZif/Pacific/Marquesas",
+    "TZif/Pacific/Kanton",
     "TZif/Pacific/Bougainville",
     "TZif/Pacific/Tarawa",
     "TZif/Pacific/Rarotonga",
@@ -615,6 +619,16 @@
     "TZif/Canada/Mountain",
     "TZif/Iceland"
   ],
-  "license": "Write me!",
-  "source-url": "Write me!"
+  "support": {
+    "source": "git://github.com/alabamenhu/TimezonesZoneInfo.git"
+  },
+  "license": "Artistic-2.0",
+  "tags": [
+    "timezones",
+    "olson",
+    "tz",
+    "tzdb"
+  ],
+  "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
+  "raku": "6.*"
 }

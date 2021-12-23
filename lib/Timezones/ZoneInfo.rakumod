@@ -20,7 +20,7 @@ sub get-timezone-data (Str() $olson-id --> State) is export {
     }
 }
 
-sub apply-time-to-datetime ($dt, $tz) {
-
+sub apply-timezone-to-posix($time, State $state) is export {
+    use Timezones::ZoneInfo::Routines;
+    localsub $state, $time
 }
-

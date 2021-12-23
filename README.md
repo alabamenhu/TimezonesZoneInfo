@@ -11,6 +11,13 @@ Current IANA database version: **2021e**
 
 The timezone data is of type `Timezones::ZoneInfo::State` used with other methods.
 
+There are two main functions that work with timezones that you are likely to want to use:
+
+  * **`sub localsub (State $tz-data, Int $posix-timestamp, :$leapadjusted = False --> Time)`**  
+  Given a POSIX time stamp, provides the associated date/time (in a `Time` structure) for the timezone.  Passing `:leapadjusted` indicates that leapseconds are already included in the timestamp (this is not POSIX standard, but may be preferable for some applications)
+  * **`sub mktime (State $tz-data, Time $tm-struct, :$leapadjust = False --> Time)`**  
+  ***(NYI)*** Given a tm structure (`Timezones::ZoneInfo::Time`), provides the associated POSIX timestamp and GMT offsets.  Pay close attention to the `dst` attribute: use `1` or `0` if you know the time to be in daylight savings time or not, use `-1` if you are not sure.  Passing `:leapadjust` will include leap seconds in the timestamp (not POSIX standard, but may be preferable for some applications). 
+
 Given a `DateTime` object from Raku, to interpret it in a given timezone, run it through the `localsub` \*ahem* sub:
 
 ```raku
