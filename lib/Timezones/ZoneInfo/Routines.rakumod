@@ -68,7 +68,8 @@ use Timezones::ZoneInfo::Time;
 use Timezones::ZoneInfo::LeapSecInfo;
 
 #| These variables names match localtime's localsub's
-sub localsub( State $sp, time $t is copy, #`[$setname,] Time $tmp = Time.new, :$leapadjusted = False --> Time) is export {
+sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = Time.new, :$leapadjusted = False --> Time) is export {
+
     my TransTimeInfo $ttisp;
     my int64         $i;
     my Time          $result;
@@ -96,7 +97,7 @@ sub localsub( State $sp, time $t is copy, #`[$setname,] Time $tmp = Time.new, :$
             die "Impossible situation";
             return $NULL;	# "cannot happen" per C code, C code returns null
         }
-        $result = localsub($sp, $newt, #`[$setname,] $tmp);
+        $result = localsub($sp, $newt, #`[$setname, ←unused?] $tmp);
         if $result {
             my int64 $newy;
 
@@ -114,30 +115,20 @@ sub localsub( State $sp, time $t is copy, #`[$setname,] Time $tmp = Time.new, :$
 
     if $sp.time-count == 0
     || $t < $sp.ats.head {
-        die "Highly unlikely situation at line {$?LINE}";
-		$i = $sp.default-type; # this shouldn't happen
+        # TODO HANDLE A 0 TIME COUNT
+        # die "Highly unlikely situation at line {$?LINE}, sp has {$sp.type-count} types";
+		$i = 0; # $sp.default-type; # this shouldn't happen often
 	} else {
-		say "Determining transition moment...";
-		say "  - First moment: ", DateTime.new($sp.ats.head);
-		say "  - Look4 moment: ", DateTime.new($t);
-		say "  - Last  moment: ", DateTime.new($sp.ats.tail);
 		my int64 $lo = 1;
 		my int64 $hi = $sp.time-count;
-		say "Maximum time conut is $hi";
 
 		while $lo < $hi {
 			my int64 $mid = ($lo + $hi) div 2;
-			say "$lo ... $hi --> $mid";
 			if   $t < $sp.ats[$mid] { $hi = $mid    }
 			else	                { $lo = $mid + 1};
 		}
-		say "The types: ", $sp.types>>.Str.join;
-		say $lo;
-		say +$sp.types;
 		$i = $sp.types[$lo - 1];
 	}
-	say "The type was $i";
-	say "The offsets are ", $sp.ttis>>.utoffset;
 	$ttisp = $sp.ttis[$i];
 
 	$result = timesub($t, $ttisp.utoffset, $sp, $tmp);
@@ -165,7 +156,7 @@ sub leaps_thru_end_of(time \year) {
 
 
 # I *think* $t is readwrite here
-sub timesub(time $timep is rw, int32 $offset, State $sp, Time $tmp --> Time) {
+sub timesub(time $timep is rw, int32 $offset, State $sp, Time:D $tmp --> Time) {
 	my LeapSecInfo	$lp;
 	my time	        $tdays;
 	my int32        $ip;
@@ -176,7 +167,6 @@ sub timesub(time $timep is rw, int32 $offset, State $sp, Time $tmp --> Time) {
 	my int32        $dayoff;
 	my int32        $dayrem;
 	my time         $y;
-
 
 	# If less than SECSPERMIN, the number of seconds since the
     # most recent positive leap second; otherwise, do not add 1
@@ -197,9 +187,7 @@ sub timesub(time $timep is rw, int32 $offset, State $sp, Time $tmp --> Time) {
 			last
 		}
 	}
-	say "POSIX time in timesub: $timep"  if $*TZDEBUG;
-	say "Leapsecond correction: $corr"   if $*TZDEBUG;
-	say "Established offset:    $offset" if $*TZDEBUG;
+
 
     $tdays    = $timep  div $SECSPERDAY;
 	$rem      = $timep  mod $SECSPERDAY;
@@ -234,17 +222,18 @@ sub timesub(time $timep is rw, int32 $offset, State $sp, Time $tmp --> Time) {
 
     # At this point, the C code does a check for signedness of the time
     # unit, which we define here as int64.  The raw True/False here (always
-    # skipping the first branch) represents that for future maintainers
+    # skipping the first branch) represents that for future maintainers.
+    # Effectively, though, we want to know if we can actually represent the year
+    # and return a type object (a substitute for a null check) if we can't
 	if (!True && $y < $TM_YEAR_BASE) {
 	    #int signed_y = y;
 	    #tmp->tm_year = signed_y - TM_YEAR_BASE;
-	} elsif (!True || $INT_MIN + $TM_YEAR_BASE ≤ $y)
-		   && $y - $TM_YEAR_BASE ≤ $INT_MAX {
+	} elsif (!True || $INT_FAST32_MIN + $TM_YEAR_BASE ≤ $y) # use INT_FAST32_MIN because year is 32bit
+		   && $y - $TM_YEAR_BASE ≤ $INT_FAST32_MAX {
 		$tmp.year = $y - $TM_YEAR_BASE;
 
 	} else {
-	    die "Overflow at {$?LINE}";
-	    return $NULL;
+	    return Time; # $NULL, here we use a type object which is falsy
 	}
 	$tmp.yearday = $idays;
 
@@ -260,8 +249,7 @@ sub timesub(time $timep is rw, int32 $offset, State $sp, Time $tmp --> Time) {
 	if $tmp.weekday < 0 {
 	    $tmp.weekday += $DAYSPERWEEK
 	};
-	say "The remainder is $rem";
-	say "The polymod remainder is ", $rem.polymod(60,60);
+
 	$tmp.hour = $rem div $SECSPERHOUR;
 	$rem mod= $SECSPERHOUR;
 	$tmp.minute = $rem div $SECSPERMIN;
@@ -330,12 +318,16 @@ grammar Posix-TZ {
     token change:leap   { $<type>=''  $<day>  =<.number>                             '/' <time> }
 }
 
+sub mktime(Time $tmp, State $sp) is export {
+	my int32 $zero = 0;
+	time1 $tmp, &localsub, $sp #`[, $zero ←unused?]; #<--false;
+}
 # This is just "time1" in localtime.c
 sub time1 (
     Time  $tmp,
-    Time  &funcp, # (State, time, int32, Time)
+    Time  &funcp, # (State, time, [int32], Time)
     State $sp,
-    int32 $offset
+    #`[ int32 $offset ←unused? ]
     --> time
 ) {
     my time   $t;
@@ -347,12 +339,15 @@ sub time1 (
 	my uint8  @types[$TZ_MAX_TYPES];
 	my Bool   $okay;
 
+
 	if !$tmp { # originally if $tmp = NULL
 	    warn "value outside of range at {$?LINE}";
 		return $WRONG;
 	}
 	if $tmp.dst > 1 { $tmp.dst = 1 }
-	$t = time2($tmp, &funcp, $sp, $offset, $okay);
+
+	$t = time2($tmp, &funcp, $sp, #`[$offset, ←unused?] $okay);
+
 	if $okay        { return $t }
 	if $tmp.dst < 0 { return $t } # under POSIX Conf Test Suite, $tmp.dst = 0
 
@@ -388,7 +383,7 @@ sub time1 (
 			$tmp.second += ($sp.ttis[$otheri].utoffset
 					- $sp.ttis[$samei].utoffset);
 			$tmp.dst = !$tmp.dst;
-			$t = time2($tmp, &funcp, $sp, $offset, $okay);
+			$t = time2($tmp, &funcp, $sp, #`[$offset, ←unused?] $okay);
 			if ($okay) {
 			    return $t
 			}
@@ -402,29 +397,36 @@ sub time1 (
 
 sub time2 (
     Time $tmp,
-    Time &funcp, # (State, time, int32, Time)
+         &funcp, # (State, time, int32, Time)
     State $sp,
-    int32 $offset,
-    Bool $okay is rw;
+    #`[ int32 $offset is rw, ←unused?]
+    Bool $okay is rw # bool
+    --> time
 )  {
-    my time $t;
+    my time $t = 0;
     #  First try without normalization of seconds
     #  (in case tm_sec contains a value associated with a leap second).
     #  If that fails, try with normalization of seconds.
-    $t = time2sub($tmp, &funcp, $sp, $offset, $okay, false);
-    return $okay
-        ?? $t
-        !! time2sub($tmp, &funcp, $sp,$offset, $okay, true)
+
+
+	my int32 $FALSE = 0;
+	my int32 $TRUE  = 1;
+    $t = time2sub($tmp, &funcp, $sp, #`[$offset, ←unused?] $okay, $FALSE);
+    return $t # if $okay;
+    #return $okay
+    #    ?? $t
+    #    !! time2sub($tmp, &funcp, $sp, #`[$offset, ←unused?] $okay, $TRUE)
 }
 
 sub time2sub (
     Time   $tmp,
-    Time   &funcp, # (State, time, int32, Time) # time and Time should be RW!!!
+           &funcp, # (State, time, int32, Time) # time and Time should be RW!!!
     State  $sp,
-    int32  $offset,
-    Bool   $okayp is rw,
-    Bool() $do_norm_secs) {
-
+    #`[ int32 $offset is rw, ←unused?]
+    Bool  $okayp is rw, #bool
+    int32  $do_norm_secs,
+    --> time
+) {
 	my int32  $dir;
 	my int32 ($i, $j);
 	my int32  $saved_seconds;
@@ -436,45 +438,131 @@ sub time2sub (
 	my time   $t;
 	my Time  ($yourtm, $mytm);
 
-	$okayp = false;
+	$okayp = False;
 	$yourtm = $tmp;
+	$mytm = Time.new; # special for Raku, otherwise $mytime ends up a type object
+
 	if $do_norm_secs {
-		if normalize_overflow($yourtm.minute, $yourtm.second, $SECSPERMIN) {
-		    return $WRONG
+		# if normalize_overflow($yourtm.minute, $yourtm.second, $SECSPERMIN) {
+		#     return $WRONG
+		# }
+		NORMALIZE_OVERFLOW_WORKAROUND_α: {
+			my int16 ($a, $b, $c) = $yourtm.minute, $yourtm.second, $SECSPERMIN;
+			my int16 $d = ($b ≥ 0) ?? ($b div $c) !! (-1 - (-1 - $b) div $c);
+			$yourtm.second -= $d * $c; # $b -= $d * $c; # rewrite
+			if ($a ≥ 0
+				?? ($d > $INT_MAX - $a)
+				!! ($d < $INT_MIN - $a)) {
+				return $WRONG # return true aka, trigger return
+			}else{
+				$yourtm.minute += $d; # $a += $d rewrite
+				# return false (aka, do nothing)
+			}
 		}
 	}
-	if normalize_overflow($yourtm.hour, $yourtm.minute, $MINSPERHOUR) {
-		return $WRONG
-    }
-	if normalize_overflow($yourtm.day, $yourtm.hour, $HOURSPERDAY) {
-		return $WRONG
-    }
+	# if normalize_overflow($yourtm.hour, $yourtm.minute, $MINSPERHOUR) {
+	# 	return $WRONG
+    # }
+    NORMALIZE_OVERFLOW_WORKAROUND_β: {
+		my int16 ($a, $b, $c) = $yourtm.hour, $yourtm.minute, $MINSPERHOUR;
+		my int16 $d = ($b ≥ 0) ?? ($b div $c) !! (-1 - (-1 - $b) div $c);
+		$yourtm.minute -= $d * $c; # $b -= $d * $c; # rewrite
+		if ($a ≥ 0
+			?? ($d > $INT_MAX - $a)
+			!! ($d < $INT_MIN - $a)) {
+			return $WRONG # return true aka, trigger return
+		}else{
+			$yourtm.hour += $d; # $a += $d rewrite
+			# return false (aka, do nothing)
+		}
+	}
+
+	# if normalize_overflow($yourtm.day, $yourtm.hour, $HOURSPERDAY) {
+	# 	return $WRONG
+    # }
+	NORMALIZE_OVERFLOW_WORKAROUND_γ: {
+		my int16 ($a, $b, $c) = $yourtm.day, $yourtm.hour, $HOURSPERDAY;
+		my int16 $d = ($b ≥ 0) ?? ($b div $c) !! (-1 - (-1 - $b) div $c);
+		$yourtm.hour -= $d * $c; # $b -= $d * $c; # rewrite
+		if ($a ≥ 0
+			?? ($d > $INT_MAX - $a)
+			!! ($d < $INT_MIN - $a)) {
+			return $WRONG # return true aka, trigger return
+		}else{
+			$yourtm.day += $d; # $a += $d rewrite
+			# return false (aka, do nothing)
+		}
+	}
+
 	$y = $yourtm.year;
-	if normalize_overflow32($y, $yourtm.month, $MONSPERYEAR) {
-	    return $WRONG
-    }
+	# if normalize_overflow32($y, $yourtm.month, $MONSPERYEAR) {
+	#     return $WRONG
+    # }
+	NORMALIZE_OVERFLOW_WORKAROUND_δ: {
+		my int16 ($a, $b, $c) = $y, $yourtm.month, $MONSPERYEAR;
+		my int16 $d = ($b ≥ 0) ?? ($b div $c) !! (-1 - (-1 - $b) div $c);
+		$yourtm.month -= $d * $c; # $b -= $d * $c; # rewrite
+		if ($a ≥ 0
+			?? ($d > $INT_MAX - $a)
+			!! ($d < $INT_MIN - $a)) {
+			return $WRONG # return true aka, trigger return
+		}else{
+			$y += $d; # $a += $d rewrite
+			# return false (aka, do nothing)
+		}
+	}
 
 
 	# Turn y into an actual year number for now.
 	# It is converted back to an offset from TM_YEAR_BASE later.
 
-	if increment_overflow32($y, $TM_YEAR_BASE) {
-        return $WRONG
+	# if increment_overflow32($y, $TM_YEAR_BASE) {
+    #     return $WRONG
+    # }
+    INCREMENT_OVERFLOW32_WORKAROUND_α: {
+    	my (int32 $a, int16 $b) = $y, $TM_YEAR_BASE;
+		if ($a ≥ 0)
+			?? ($b > $INT_FAST32_MAX - $a)
+			!! ($b < $INT_FAST32_MIN - $a) {
+			return $WRONG; # originally 'return true'
+		}
+		$y += $b; # originally $a += $b, but is rw
     }
+
 	while ($yourtm.day ≤ 0) {
-		if (increment_overflow32($y, -1)) {
-			return $WRONG;
+		# if (increment_overflow32($y, -1)) {
+		#     return $WRONG;
+        # }
+        INCREMENT_OVERFLOW32_WORKAROUND_β: {
+			my (int32 $a, int16 $b) = $y, -1;
+			if ($a ≥ 0)
+				?? ($b > $INT_FAST32_MAX - $a)
+				!! ($b < $INT_FAST32_MIN - $a) {
+				return $WRONG; # originally 'return true'
+			}
+			$y += $b; # originally $a += $b, but is rw
         }
 		$li = $y + (1 < $yourtm.month);
 		$yourtm.day += @year_lengths[isleap($li)];
 	}
+
 	while ($yourtm.day > $DAYSPERLYEAR) {
 		$li = $y + (1 < $yourtm.month);
 		$yourtm.day -= @year_lengths[isleap($li)];
-		if (increment_overflow32($y, 1)) {
-			return $WRONG;
+		# if (increment_overflow32($y, 1)) {
+		#     return $WRONG;
+        # }
+        INCREMENT_OVERFLOW32_WORKAROUND_γ: {
+			my (int32 $a, int16 $b) = $y, 1;
+			if ($a ≥ 0)
+				?? ($b > $INT_FAST32_MAX - $a)
+				!! ($b < $INT_FAST32_MIN - $a) {
+				return $WRONG; # originally 'return true'
+			}
+			$y += $b; # originally $a += $b, but is rw
         }
 	}
+
 	loop {
 		$i = @mon_lengths[isleap($y)][$yourtm.month];
 		if ($yourtm.day ≤ $i) {
@@ -483,14 +571,32 @@ sub time2sub (
 		$yourtm.day -= $i;
 		if (++$yourtm.month) ≥ $MONSPERYEAR {
 			$yourtm.month = 0;
-			if (increment_overflow32($y, 1)) {
-				return $WRONG
-            }
+			# if (increment_overflow32($y, 1)) {
+			#     return $WRONG
+            # }
+			INCREMENT_OVERFLOW32_WORKAROUND_δ: {
+				my (int32 $a, int16 $b) = $y, 1;
+				if ($a ≥ 0)
+					?? ($b > $INT_FAST32_MAX - $a)
+					!! ($b < $INT_FAST32_MIN - $a) {
+					return $WRONG; # originally 'return true'
+				}
+				$y += $b; # originally $a += $b, but is rw
+			}
 		}
 	}
-	if (increment_overflow32($y, -$TM_YEAR_BASE)) {
-		return $WRONG;
-    }
+	# if (increment_overflow32($y, -$TM_YEAR_BASE)) {
+	#     return $WRONG;
+    # }
+	INCREMENT_OVERFLOW32_WORKAROUND_ε: {
+		my (int32 $a, int16 $b) = $y, -$TM_YEAR_BASE;
+		if ($a ≥ 0)
+			?? ($b > $INT_FAST32_MAX - $a)
+			!! ($b < $INT_FAST32_MIN - $a) {
+			return $WRONG; # originally 'return true'
+		}
+		$y += $b; # originally $a += $b, but is rw
+	}
 	if (! ($INT_MIN ≤ $y ≤ $INT_MAX)) {
 		return $WRONG;
     }
@@ -505,9 +611,19 @@ sub time2sub (
 		# This assumes that the minimum representable time is
 		# not in the same minute that a leap second was deleted from,
 		# which is a safer assumption than using 58 would be.
-		if (increment_overflow($yourtm.second, 1 - $SECSPERMIN)) {
-			return $WRONG;
-        }
+
+		# if (increment_overflow($yourtm.second, 1 - $SECSPERMIN)) {
+		#     return $WRONG;
+        # }
+		INCREMENT_OVERFLOW_WORKAROUND_α: {
+			my int16 ($a, $b) = $yourtm.second, 1 - $SECSPERMIN;
+			if ($a ≥ 0)
+				?? ($b > $INT_MAX - $a)
+				!! ($b < $INT_MIN - $a) {
+				return $WRONG; # originally 'return true'
+			}
+			$yourtm.second += $b; # originally $a += $b, but is rw
+		}
 		$saved_seconds = $yourtm.second;
 		$yourtm.second = $SECSPERMIN - 1;
 	} else {
@@ -515,16 +631,21 @@ sub time2sub (
 		$yourtm.second = 0;
 	}
 
-
 	# Do a binary search (this works whatever time_t's type is).
+
+	# Basically, this search picks (leapcorrected) POSIX time values
+	# It then determines what the time would be in the given time zone
+	# and then compares the resultant calendar time with the given one,
+	# and then tries again.
 	$lo = $TIME_T_MIN;
 	$hi = $TIME_T_MAX;
 	BINARY_SEARCH:
 	loop {
+
 		$t = $lo div 2 + $hi div 2;
 		if    ($t < $lo) { $t = $lo }
 		elsif ($t > $hi) { $t = $hi }
-		if (! funcp($sp, $t, $offset, $mytm)) {
+		if (! funcp($sp, $t,  #`[$offset, ←unused?] $mytm)) {
 			# Assume that t is too extreme to be represented in
 			# a struct tm; arrange things so that it is less
 			# extreme on the next pass.
@@ -576,9 +697,23 @@ sub time2sub (
 			  #   since the guess gets checked.
 			  my time $altt = $t;
 			  my int32 $diff = $mytm.gmt-offset - $yourtm.gmt-offset;
-			  if (!increment_overflow_time($altt, $diff)) {
+
+			  # if (!increment_overflow_time($altt, $diff)) { # THIS LINE BEING WORKED AROUND
+			  my Bool $IOT;
+			  INCREMENT_OVERFLOW_TIME_WORKAROUND: {
+			  	  my (time $a, int32 $b) = $altt, $diff;
+			      if (! ($b < 0
+						   ?? ($TIME_T_MIN - $b ≤ $a)
+						   !! ($a ≤ $TIME_T_MAX - $b))) {
+					  $IOT = True;
+				  } else{
+				      $altt += $b;
+				      $IOT = False;
+				  }
+			  }
+			  if !$IOT { # this is the final line of the
 				my Time $alttm;
-				if (funcp($sp, $altt, $offset, $alttm)
+				if (funcp($sp, $altt, #`[$offset, ←unused?] $alttm)
 				&& $alttm.tm_isdst == $mytm.tm_isdst
 				&& $alttm.gmt-offset == $yourtm.gmt-offset
 				&& tmcomp($alttm, $yourtm) == 0) {
@@ -610,7 +745,7 @@ sub time2sub (
 				}
 				$newt = ($t + $sp.ttis[$j].utoffset
 					- $sp.ttis[$i].utoffset);
-				if (! funcp($sp, $newt, $offset, $mytm)) {
+				if (! funcp($sp, $newt,  #`[$offset, ←unused?] $mytm)) {
 					next;
 				}
 				if (tmcomp($mytm, $yourtm) != 0) {
@@ -633,13 +768,19 @@ sub time2sub (
 		return $WRONG;
 	}
 	$t = $newt;
-	if (funcp($sp, $t, $offset, $tmp)) {
-		$okayp = true;
+	if (funcp($sp, $t,  #`[$offset, ←unused?] $tmp)) {
+		$okayp = True;
 	}
 	return $t;
 }
 
 
+# ⚠︎ The following normalize_overflow and increment_overflow routines
+# ⚠︎   rely upon passing read-writable native ints. As of 24 XII 2021,
+# ⚠︎   this causes a bytecode validation error, for more info, see
+# ⚠︎   https://github.com/MoarVM/MoarVM/issues/1626
+# ⚠︎ Once fixed, please delete WORKAROUND: labeled blocks for the
+# ⚠︎   original code (commented out immediately above).
 sub normalize_overflow(int16 $tensptr is rw, int16 $unitsptr is rw, int16 $base)
 {
 	my int16 $tensdelta;
@@ -706,7 +847,13 @@ sub increment_overflow_time(time $tp is rw, int32 $j)
 }
 
 sub tmcomp(Time $a, Time $b) {
-
+	my $x;
+	if $x = $a.year   <=> $b.year   { return $x }
+	if $x = $a.month  <=> $b.month  { return $x }
+	if $x = $a.day    <=> $b.day    { return $x }
+	if $x = $a.hour   <=> $b.hour   { return $x }
+	if $x = $a.minute <=> $b.minute { return $x }
+	return  $a.second <=> $b.second
 }
 
 

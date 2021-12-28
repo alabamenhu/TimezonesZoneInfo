@@ -1,15 +1,15 @@
 unit class Time is export;
 
-has int32 $.second     is rw;      #=  0..61  (for leapseconds)
-has int32 $.minute     is rw;      #=  0..59
-has int32 $.hour       is rw;      #=  0..23
-has int32 $.day        is rw;      #=  1..31
-has int32 $.month      is rw;      #=  0..11  (months since January)
+has int16 $.second     is rw;      #=  0..61  (for leapseconds)
+has int16 $.minute     is rw;      #=  0..59
+has int16 $.hour       is rw;      #=  0..23
+has int16 $.day        is rw;      #=  1..31
+has int16 $.month      is rw;      #=  0..11  (months since January)
 has int32 $.year       is rw;      #= -∞..∞   (years since 1900; 1910 = 10; 1899 = -1)
-has int32 $.weekday    is rw;      #=  0..6   (days since Sunday; Monday = 1)
-has int32 $.yearday    is rw;      #=  0..365 (Day index in year)
-has int32 $.dst        is rw;      #= -1..1   (0 no dst, 1 dst, -1 unknown/automatic)
-has int32 $.gmt-offset is rw;      #= -∞..∞   (offset of GMT, positive = east of GMT)
+has int16 $.weekday    is rw =  0; #=  0..6   (days since Sunday; Monday = 1)
+has int16 $.yearday    is rw =  0; #=  0..365 (Day index in year)
+has int16 $.dst        is rw = -1; #= -1..1   (0 no dst, 1 dst, -1 unknown/automatic)
+has int16 $.gmt-offset is rw =  0; #= -∞..∞   (offset of GMT, positive = east of GMT)
 has str   $.tz-abbr    is rw = ""; #=         (Timezone abbreviation NULL AFTER localtime)
 
 multi method gist(::?CLASS:D:) {

@@ -17,7 +17,7 @@ has TransTimeInfo @.ttis;               #= The rules for the transition time, in
 has LeapSecInfo   @.lsis;               #= The leap seconds for this timezone.
 has str           $.name;
 
-multi method gist (::?CLASS:D:) { "TZif:$.name"}
+multi method gist (::?CLASS:D:) { "TZif:$!name"}
 multi method gist (::?CLASS:U:) { "(TZif)" }
 
 #| Creates a new TZ State object from a tzfile blob.
