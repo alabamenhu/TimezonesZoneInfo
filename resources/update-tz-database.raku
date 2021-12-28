@@ -38,7 +38,7 @@ steps to be performed manually in case something is causing them problems.
 First we have a few constants:
 =end pod
 constant $updater-version = '0.6.0';
-constant $module-version  = '0.1.0';
+constant $module-version  = '0.1.2';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz';
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz';
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe
@@ -56,6 +56,7 @@ my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str;
 my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str;
 my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str;
 my \TZ-BACK-FILE   = $*PROGRAM.parent.add('update/data/backward').resolve.Str;
+my \TZ-LINK-FILE   = $*PROGRAM.parent.add('links').resolve.Str.IO;
 
 # Because I like teh pretty
 constant $g = "\x001b[32m";
@@ -176,19 +177,11 @@ solution, we simply copy the files.
 =end pod
 
 print "Establishing back links... ";
+TZ-LINK-FILE.spurt: ""; # clear old
 for TZ-BACK-FILE.IO.lines -> $line {
     next unless $line ~~ /^Link \h+ $<new>=<[a..zA..Z/_-]>+ \h+ $<old>=<[a..zA..Z/_-]>+/;
     print "\rEstablishing back links... $b","($<old>)$x \x001b[K";
-    run('mkdir', '-p', TZif-DIR.IO.add($<old>).parent.resolve.Str);
-    unless my $proc = run(
-            'cp',
-            "{TZif-DIR}/$<new>",
-            "{TZif-DIR}/$<old>", :err) {
-        my $err = $proc.err.slurp(:close);
-        next if $err.contains('identical');
-        say("   ", $r, "|", $x, " $_") for $err.lines;
-        die "Please fix the above and try again.";
-    }
+    TZ-LINK-FILE.spurt: "$<old>\n$<new>\n", :append;
 }
 say "\rEstablishing back links... ", $g, "OK", $x, "\x001b[K";
 
@@ -222,6 +215,7 @@ sub get-contents(IO() $folder) {
 }
 
 my @resources = get-contents(TZif-DIR).map('TZif/' ~ *);
+@resources.push('links');
 
 my $meta6 = META6.new(
         name         => <Timezones::ZoneInfo>,
@@ -230,6 +224,7 @@ my $meta6 = META6.new(
         perl-version => Version.new('6.*'),
         raku-version => Version.new('6.*'),
         test-depends => <Test>,
+        depends      => [],
         resources    => @resources,
         tags         => <timezones olson tz tzdb>,
         authors      => ['Matthew Stephen STUCKWISCH <mateu@softastur.org>'],
@@ -239,6 +234,7 @@ my $meta6 = META6.new(
             source => 'git://github.com/alabamenhu/TimezonesZoneInfo.git'
         ),
         provides => {
+            'CX::Warn::Timezones::UnknownID' => 'lib/CX/Warn/Timezones/UnknownID.rakumod',
             'Timezones::ZoneInfo' => 'lib/Timezones/ZoneInfo.rakumod',
             'Timezones::ZoneInfo::ConvRule' => 'lib/Timezones/ZoneInfo/ConvRule.rakumod',
             'Timezones::ZoneInfo::LeapSecInfo' => 'lib/Timezones/ZoneInfo/LeapSecInfo.rakumod',
@@ -248,7 +244,7 @@ my $meta6 = META6.new(
             'Timezones::ZoneInfo::Time' => 'lib/Timezones/ZoneInfo/Time.rakumod',
             'Timezones::ZoneInfo::TransTimeInfo' => 'lib/Timezones/ZoneInfo/TransTimeInfo.rakumod',
         },
-        license     => 'Artistic-2.0',
+        license     => 'CC0-1.0',
 );
 
 META6-FILE.IO.spurt: $meta6.to-json;
