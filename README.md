@@ -4,26 +4,22 @@ A Raku module containing data (as well as some support routines) based on IANA's
 Current IANA database version: **2021e** 
 
 # Usage
-```raku
-   use Timezones::Data;
-   get-timezone-data 'America/New_York'; # Obtain timezone data for the US's Eastern time
-```
+There are three exported subs that will be the most commonly used.  Advanced users may wish to view the `Routines` submodule for more options.
 
-The timezone data is of type `Timezones::ZoneInfo::State` used with other methods. The identifier is the Olson ID for the zone.
+  * **`timezone-data (Str() $olson-id --> State)`**  
+Obtains the data for the given timezone.   The identifier is the Olson ID for the zone.  Backlinks for legacy IDs are followed.  If the zone does not exist, a warning is issued and the data for `Etc/GMT` is provided as a fallback.  See below for details on the `State` class.
+  * **`sub calendar-from-posix (int64 $time, State $tz-data, :$leapadjusted = False --> Time)`**  
+Given a [POSIX `time_t` stamp](https://www.gnu.org/software/libc/manual/html_node/Time-Types.html), provides the associated date/time (in a `Time` structure) for the timezone.  Passing `:leapadjusted` indicates that leapseconds are already included in the timestamp (this is not POSIX standard, but may be preferable for some applications).
+  * **`sub posix-from-calendar (Time $tm-struct, State $tz-data, :$leapadjust = False --> int64)`**
+Given a `Time` object (only ymdHMS values are used), provides the associated POSIX `time_t` timestamp and GMT offsets.  Pay close attention to the `dst` attribute: use `1` or `0` if you know the time to be in daylight savings time or not, use `-1` if you are not sure.  Passing `:leapadjust` will include leap seconds in the timestamp (not POSIX standard, but may be preferable for some applications). 
 
-There are two main functions (in `Timezones::ZoneInfo::Routines`) that work with timezones that you are likely to want to use:
+All methods work on times with integral seconds. It is left to the end user to handle any fractional seconds.
 
-  * **`sub localsub (State $tz-data, Int $posix-timestamp, :$leapadjusted = False --> Time)`**  
-  Given a POSIX time stamp, provides the associated date/time (in a `Time` structure) for the timezone.  Passing `:leapadjusted` indicates that leapseconds are already included in the timestamp (this is not POSIX standard, but may be preferable for some applications)
-  * **`sub mktime (State $tz-data, Time $tm-struct, :$leapadjust = False --> Time)`**  
-  ***(NYI)*** Given a tm structure (`Timezones::ZoneInfo::Time`), provides the associated POSIX timestamp and GMT offsets.  Pay close attention to the `dst` attribute: use `1` or `0` if you know the time to be in daylight savings time or not, use `-1` if you are not sure.  Passing `:leapadjust` will include leap seconds in the timestamp (not POSIX standard, but may be preferable for some applications). 
-
-These are more meant to be used by developers than end users, and convenience methods (or other modules) are intended to call these instead.
 # Class reference
 
 ### Timezones::ZoneInfo::Time
 
-A Raku version of the POSIX `tm` struct.  Attributes include 
+A Raku version of the [POSIX `tm` struct](https://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html) (with BSD/GNU extension).  Attributes include 
 
   * `.year` (**-∞..∞**, *years since 1900, 1910 = 10*)
   * `.month` (**0..11**, *months since January*)
@@ -41,14 +37,25 @@ The infinite ranged elements aren't actually that as they're stored as `int32`.
 
 ### Timezones::ZoneInfo::State
 
-A Raku version of `tz`'s `state` struct.  It will be made more easily introspectable in the future.
+A Raku version of `tz`'s `state` struct.  It will be made more easily introspectable in the future.  For now, these are the attributes:
+  * `.leap-count` (*number of leap seconds*)
+  * `.lsis` (*array of `LeapSecInfo`, describing when they occur and by how much*)
+  * `.time-count` (*number of moments when time shifts*)
+  * `.ats` (*array of moments, as `time_t` when time shifts*)
+  * `.type-count` (*number of transition types*)
+  * `.ttis` (*array of `TransTimeInfo`, providing meta data for time shifts*)
+  * `.types` (*array of indexes pointing to meta data for time shifts*)
+  * `.char-count` (*number of abbreviation strings types*)
+  * `.chars` (*c-style string data indicating timezone abbreviations*)
+  * `.name` (*the Olson ID for the zone*)
 
 # Data
 The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).  
 
-## Usage notes
-If you request an unknown timezone via `get-timezone-data`, the data will be returned for `Etc/GMT`.
-Using the `.posix` method of a DateTime object will strip any fractional seconds from it.
+# Version history
 
-## Development notes
-The names for the routines come from 
+  * 0.1.0
+    * First public release
+  
+# Copyright and license
+The `tz` database and the code in it is public domain.  Therefore, the author module would find it unconscionable to release this module under any license, even for his own additions.  Consequently, this module is similarly expressly released into the public domain.  For jurisdictions where that is not possible, this module may be considered licensed under CC0 v1.0 (see accompanying license file).
