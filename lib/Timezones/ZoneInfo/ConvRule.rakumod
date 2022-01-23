@@ -7,6 +7,6 @@ enum RuleType (
 
 has RuleType $.type;  #= The type of rule
 has int      $.day;   #= Day number of rule
-has int      $.week;  #= week number of rule
-has int      $.month; #= month number of rule
-has int32    $.time;  #= Transition time of rule
+has int      $.week;  #= Week number of rule
+has int      $.month; #= Month number of rule
+has int32    $.time;  #= Transition time of rule, seconds after midnight
