@@ -38,24 +38,30 @@ The infinite ranged elements aren't actually that as they're stored as `int32`.
 ### Timezones::ZoneInfo::State
 
 A Raku version of `tz`'s `state` struct.  It will be made more easily introspectable in the future.  For now, these are the attributes:
-  * `.leap-count` (*number of leap seconds*)
+  * `.leapcnt` (*number of leap seconds*)
   * `.lsis` (*array of `LeapSecInfo`, describing when they occur and by how much*)
-  * `.time-count` (*number of moments when time shifts*)
+  * `.timecnt` (*number of moments when time shifts*)
   * `.ats` (*array of moments, as `time_t` when time shifts*)
-  * `.type-count` (*number of transition types*)
+  * `.typecnt` (*number of transition types*)
   * `.ttis` (*array of `TransTimeInfo`, providing meta data for time shifts*)
   * `.types` (*array of indexes pointing to meta data for time shifts*)
-  * `.char-count` (*number of abbreviation strings types*)
   * `.chars` (*c-style string data indicating timezone abbreviations*)
+  * `.charcnt` (*length of `chars`*)
   * `.name` (*the Olson ID for the zone*)
 
 # Data
 The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).  
 
+# Todo
+  * Add support for fractional seconds
+  * Tweak custom warning throwing
+  
 # Version history
 
+  * 0.2.0
+    * Added support for version 3 files (these allow for full repeat into the future) 
   * 0.1.0
     * First public release
   
 # Copyright and license
-The `tz` database and the code in it is public domain.  Therefore, the author module would find it unconscionable to release this module under any license, even for his own additions.  Consequently, this module is similarly expressly released into the public domain.  For jurisdictions where that is not possible, this module may be considered licensed under CC0 v1.0 (see accompanying license file).
+The `tz` database and the code in it is public domain.  Therefore, the author of this module (Matthew Stephen Stuckwisch) would find it unconscionable to release this module under any license, even for his own additions.  Consequently, this module is similarly expressly released into the public domain.  For jurisdictions where that is not possible, this module may be considered © 2021–2022 and licensed under CC0 v1.0 (see accompanying license file).
