@@ -1,5 +1,6 @@
 use Test;
 use Timezones::ZoneInfo;
-use Timezones::ZoneInfo::Routines;
+
+ok True;
 
 done-testing;
