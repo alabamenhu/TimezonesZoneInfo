@@ -69,13 +69,11 @@ use Timezones::ZoneInfo::LeapSecInfo;
 
 #| These variables names match localtime's localsub's
 sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = Time.new, :$leapadjusted = False --> Time) is export {
-
     my TransTimeInfo $ttisp;
     my int64         $i;
     my Time          $result;
 
     $t = posix2time($sp, $t) unless $leapadjusted;
-
     if $sp.go-back  && $t < $sp.ats.head
     || $sp.go-ahead && $t > $sp.ats.tail {
         my time $newt;
@@ -95,7 +93,7 @@ sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = T
         if $newt < $sp.ats.head
         || $newt > $sp.ats.tail {
             die "Impossible situation";
-            return $NULL;	# "cannot happen" per C code, C code returns null
+            return Time # "cannot happen" per C code, C code returns null
         }
         $result = localsub($sp, $newt, #`[$setname, ←unused?] $tmp);
         if $result {
@@ -105,8 +103,7 @@ sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = T
             if   $t < $sp.ats.head { $newy -= $years }
             else                   { $newy += $years }
             if !($INT_MIN ≤ $newy ≤ $INT_MAX) {
-                die "Impossible situation at line {$?LINE}";
-                return $NULL;
+                return Time; # equiv of NULL;
             }
             $result.year = $newy;
         }
