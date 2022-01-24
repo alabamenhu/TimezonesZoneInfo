@@ -13,14 +13,15 @@ my int64 $TIME_T_MAX     =  2**63 - 1;
 
 my $TZ_MAX_TIMES = 2000;
 
-has int32         $.leapcnt = 0;     #= Number of leap seconds (e.g. +@!lsis)
-has int32         $.timecnt = 0;     #= Number of transition moments (e.g. +@!ats)
-has int32         $.typecnt = 0;     #= Number of local time type objects (TimeInfo)
-has int32         $.charcnt = 0;     #= Number of characters of timezone abbreviation strings (e.g. @!chars.join.chars)
-has Bool          $.goback    = False; #= Whether the time zone's rules loop in the future.
-has Bool          $.goahead   = False; #= Whether the time zone's rules loop in the past. (nearly always false)
-has str           $.chars      = "";    #= Time zone abbreviation strings (null delimited)
-has int64         @.ats[$TZ_MAX_TIMES];                #= Moments when timezone information transitions
+has int32         $.leapcnt = 0;          #= Number of leap seconds (e.g. +@!lsis)
+has int32         $.timecnt = 0;          #= Number of transition moments (e.g. +@!ats)
+has int32         $.typecnt = 0;          #= Number of local time type objects (TimeInfo)
+has int32         $.charcnt = 0;          #= Number of characters of timezone abbreviation strings (e.g. @!chars.join.chars)
+has Bool          $.goback    = False;    #= Whether the time zone's rules loop in the future.
+has Bool          $.goahead   = False;    #= Whether the time zone's rules loop in the past. (nearly always false)
+has str           $.chars      = "";      #= Time zone abbreviation strings (null delimited)
+#has int64         @.ats[$TZ_MAX_TIMES];  #= Moments when timezone information transitions
+has               @.ats;                  #= ^^ but with a quickfix due to segmentation fault in Rakudo v2021.12-146-gde06617cc / MoarVM 2021.12-81-gf1101b95d
 has int8          @.types[$TZ_MAX_TIMES]; #= The associated rule for each of the transition moments (to enable @!ats Z @!types)
 has TransTimeInfo @.ttis;                 #= The rules for the transition time, indicating seconds of offset (Transition time information structure)
 has LeapSecInfo   @.lsis;                 #= The leapseconds for this timezone.
@@ -268,25 +269,29 @@ method new (blob8 $tz, :$name) {
         say "     - " ~ @lsis.tail.gist if $*TZDEBUG;
     }
 
-
+    say "  8. Collecting std v wall indicators" if $*TZDEBUG;
     #Collect standard vs wall indicator indices, 1 = true";
     my Bool @ttisstd;
     for ^$ttisstdcnt {
         @ttisstd.push: so ( $tz[$pos] == 1);
         $pos++;
     }
+    say "     - " ~ @ttisstd.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisstd);
 
+    say "  9. Collecting gmy v local indicators" if $*TZDEBUG;
     # Collect Universal/GMT vs local indicator indices, 1 = true";
     my Bool @ttisgmt;
     for ^$ttisgmtcnt {
         @ttisgmt.push: so ($tz[$pos] == 1);
         $pos++;
     }
+    say "     - " ~ @ttisgmt.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisgmt);
 
     # Now that the standard/wall, universal/local, and rulesets
     # have been collected, we can compose the actual transition time
     # informations (found in Classes.pm6)
 
+    say "  10.Loading transition time meta info" if $*TZDEBUG;
     my TransTimeInfo @ttis;
     for ^$typecnt -> $i {
         @ttis.push:
@@ -296,7 +301,10 @@ method new (blob8 $tz, :$name) {
                 abbr-index => @ttinfo-temp[$i].abbr-index,
                 is-std     => @ttisstd[$i] // False,
                 is-ut      => @ttisgmt[$i] // False,
-                abbr       => (%tz-abbr-temp{@ttinfo-temp[$i].abbr-index} // '') # <-- TODO: this is a quick fix for America/Adak which isn't reading the strings properly
+                abbr       => (%tz-abbr-temp{@ttinfo-temp[$i].abbr-index} // ''); # <-- TODO: this is a quick fix for America/Adak which isn't reading the strings properly
+        with @ttis.tail {
+            say "     - {.abbr} is {.is-dst ?? 'dst' !! 'std'} at {.utoffset}" if $*TZDEBUG;
+        }
     }
 
     # Lastly, we determine the goback/goahead information
@@ -309,11 +317,13 @@ method new (blob8 $tz, :$name) {
     if $pos < $tz.elems {
         my %ts := Hash.new: ttis => Array.new, ats => Array.new, types => Array.new;
         my %basep = :$timecnt, :@ats, :@lsis, :$leapcnt;
+        say "  11.Processing extent tz code (via posix string)" if $*TZDEBUG;
         tzparse(
             $tz.subbuf($pos + 1).decode,  # TZ string to parse
             %ts,                          # this will get populated and read later
             %basep
         );
+        say "     - parse complete" if $*TZDEBUG;
         # At this point, @ats[$timecnt - 1] is the final explicit transition time
         # %ts<ats>[0..*] represent the continuation
 
@@ -365,6 +375,7 @@ method new (blob8 $tz, :$name) {
         }
     }
 
+    say "  12.Checking for forward/backward looping" if $*TZDEBUG;
     # check for go ahead and go back here
     die if $typecnt == 0;
     if $timecnt > 1 {
@@ -392,6 +403,7 @@ method new (blob8 $tz, :$name) {
         }
     }
 
+    say "  13. Successful load, now blessing" if $*TZDEBUG;
     self.bless:
         :$leapcnt,
         :$timecnt,
