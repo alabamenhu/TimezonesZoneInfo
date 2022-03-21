@@ -1,7 +1,7 @@
 {
   "name": "Timezones::ZoneInfo",
   "description": "A module providing timezone data and routines, based on IANA’s tz database and code",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "perl": "6.*",
   "meta-version": "0",
   "authors": [

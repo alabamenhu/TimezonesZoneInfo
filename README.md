@@ -1,7 +1,7 @@
 # Timezones::ZoneInfo
 A Raku module containing data (as well as some support routines) based on IANA's TZ database
 
-Current IANA database version: **2021e** 
+Current IANA database version: **2022a** 
 
 # Usage
 There are three exported subs that will be the most commonly used.  Advanced users may wish to view the `Routines` submodule for more options.
@@ -58,6 +58,10 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   
 # Version history
 
+  * 0.2.1
+    * Updated to 2022a version of the database
+      * Urgent update for Palestine
+      * Improvements to historical data for Ukraine and Chile.
   * 0.2.0
     * Added support for version 3 files (these allow for full repeat into the future) 
   * 0.1.0
