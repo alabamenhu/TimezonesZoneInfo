@@ -58,6 +58,10 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   
 # Version history
 
+  * 0.2.2
+    * Updated to 2022b version of the database
+      * Urgent update for Chile
+      * Iran will no longer use DST
   * 0.2.1
     * Updated to 2022a version of the database
       * Urgent update for Palestine
