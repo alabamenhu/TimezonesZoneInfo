@@ -1,8 +1,8 @@
 #| The information on timezone and leapseconds for a timezone
 unit class State is export;
 
-use Timezones::ZoneInfo::TransTimeInfo;
-use Timezones::ZoneInfo::LeapSecInfo;
+use Timezones::ZoneInfo::TransTimeInfo:auth<zef:guifa>;
+use Timezones::ZoneInfo::LeapSecInfo:auth<zef:guifa>;
 
 my int64 $SECSPERDAY     =  86400;
 my int64 $SECSPERREPEAT  =  12622780800;

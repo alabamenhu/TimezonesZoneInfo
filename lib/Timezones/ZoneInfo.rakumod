@@ -1,5 +1,5 @@
-use Timezones::ZoneInfo::State;
-use Timezones::ZoneInfo::Time;
+use Timezones::ZoneInfo::State:auth<zef:guifa>;
+use Timezones::ZoneInfo::Time:auth<zef:guifa>;
 sub next-tz-rule-change     { !!! }
 sub previous-tz-rule-change { !!! }
 
