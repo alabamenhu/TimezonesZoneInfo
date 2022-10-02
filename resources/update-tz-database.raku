@@ -39,33 +39,34 @@ First we have a few constants:
 =end pod
 constant $updater-version = '0.6.0';
 constant $module-version  = '0.1.2';
-constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz';
-constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz';
+constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= The location of tz data on the WWW
+constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= The location of tz code on the WWW
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe
                              factory northamerica southamerica>; #pacificnew removed in 2020b
 constant TZ-ZIC-FILES     = <zic.c private.h tzfile.h version>;
 
-my \TZ-BIN-DIR     = $*PROGRAM.parent.add('update/bin').resolve;
-my \TZ-DL-DIR      = $*PROGRAM.parent.add('update/download').resolve;
-my \TZ-DATA-DL     = $*PROGRAM.parent.add('update/download/tzdata-latest.tar.gz').resolve.Str;
-my \TZ-CODE-DL     = $*PROGRAM.parent.add('update/download/tzcode-latest.tar.gz').resolve.Str;
-my \TZ-DATA-DIR    = $*PROGRAM.parent.add('update/data/').resolve.Str;
-my \TZif-DIR       = $*PROGRAM.parent.add('TZif').resolve.Str;
-my \TZ-LEAPSECONDS = $*PROGRAM.parent.add('update/data/leapseconds').resolve.Str;
-my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str;
-my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str;
-my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str;
+my \TZ-BIN-DIR     = $*PROGRAM.parent.add('update/bin').resolve;       #= Where the tz utility should compile to
+my \TZ-DL-DIR      = $*PROGRAM.parent.add('update/download').resolve;  #= Where tz files should be downloaded to
+my \TZ-DATA-DL     = $*PROGRAM.parent.add('update/download/tzdata-latest.tar.gz').resolve.Str; #= Where the tz data ought to be downloaded
+my \TZ-CODE-DL     = $*PROGRAM.parent.add('update/download/tzcode-latest.tar.gz').resolve.Str; #= Where the tz code ought to be downloaded
+my \TZ-DATA-DIR    = $*PROGRAM.parent.add('update/data/').resolve.Str; #= Where the tz data will expand to
+my \TZif-DIR       = $*PROGRAM.parent.add('TZif').resolve.Str; #= Where compiled tz data files will go
+my \TZ-LEAPSECONDS = $*PROGRAM.parent.add('update/data/leapseconds').resolve.Str; #= Where leapseconds data is stored
+my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str; #= Timezones::ZoneInfo's current META6 file
+my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str; #= File with the previous version of tz data compiled
+my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str; #= The location of the executable zic utility
 my \TZ-BACK-FILE   = $*PROGRAM.parent.add('update/data/backward').resolve.Str;
-my \TZ-LINK-FILE   = $*PROGRAM.parent.add('links').resolve.Str.IO;
+my \TZ-LINK-FILE   = $*PROGRAM.parent.add('links').resolve.Str.IO; #= A file (newline delimited) with pairs of alias names to real names
+my \TZ-ZONE-FILE   = $*PROGRAM.parent.add('zones').resolve.Str.IO; #= A file that lists each available timezone
 
 # Because I like teh pretty
-constant $g = "\x001b[32m";
-constant $r = "\x001b[31m";
-constant $b = "\x001b[34m";
-constant $x = "\x001b[0m";
+constant $g     = "\x001b[32m";
+constant $r     = "\x001b[31m";
+constant $b     = "\x001b[34m";
+constant $x     = "\x001b[0m";
 constant $tall1 = "\x001b#3";
 constant $tall2 = "\x001b#4";
-constant $wide = "\x001b#6";
+constant $wide  = "\x001b#6";
 
 
 # Sometimes github doesn't work well with empty directories,
@@ -129,7 +130,7 @@ of this module) as the following:
     static char const TZVERSION[]="";
     static char const REPORT_BUGS_TO[]="";
 
-GCC is required, but perhaps other compiles could be enabled in the
+GCC is required, but perhaps other compilers could be enabled in the
 future.  We do a basic compile without optimization because the
 processing is so fast anyways.
 =end pod
@@ -155,6 +156,7 @@ the excess to reduce download size.
 =end pod
 
 print "Processing zone files... ";
+TZ-ZONE-FILE.spurt: ""; # clear old
 for TZ-ZONE-FILES<> -> $zone {
     print "\rProcessing zone files... $b","($zone)$x \x001b[K";
     unless my $proc = run(
@@ -162,24 +164,33 @@ for TZ-ZONE-FILES<> -> $zone {
             '-d', TZif-DIR,
             '-L', TZ-LEAPSECONDS,
              "{TZ-DATA-DIR}/$zone", :err) {
-    say $r, "ERROR", $x;
-    say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
-    die "Please fix the above and try again.";
-  }
+        say $r, "ERROR", $x;
+        say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
+        die "Please fix the above and try again.";
+    }
+
+    # get names of individual ones
+    for TZ-DATA-DIR.IO.add($zone).lines.grep(*.starts-with: 'Zone')>>.match(/^Zone \h+ <( \S+ )>/) -> $id {
+        TZ-ZONE-FILE.spurt: "$id\n", :append;
+    }
+    # And now the aliased versions
+    for TZ-DATA-DIR.IO.add($zone).lines.grep(*.starts-with: 'Link')>>.match(/^Link \h+ <[a..zA..Z0..9/_-]>+ \h+ <(<[a..zA..Z0..9/_-]>+ )>/) -> $id {
+        TZ-ZONE-FILE.spurt: "$id\n", :append;
+    }
+
 }
 say "\rProcessing zone files... ", $g, "OK", $x, "\x001b[K";
 
 
 =begin pod
-Around 1993, a number of timezones were renamed.  It is likely that
-the names may stick around, so for now in lieu of a more involved
-solution, we simply copy the files.
+Around 1993, a number of timezones were renamed.  These name changes
+were included as links in a separate file.  We read them in here separately.
 =end pod
 
 print "Establishing back links... ";
 TZ-LINK-FILE.spurt: ""; # clear old
 for TZ-BACK-FILE.IO.lines -> $line {
-    next unless $line ~~ /^Link \h+ $<new>=<[a..zA..Z/_-]>+ \h+ $<old>=<[a..zA..Z/_-]>+/;
+    next unless $line ~~ /^Link \h+ $<new>=<[a..zA..Z0..9/_-]>+ \h+ $<old>=<[a..zA..Z0..9/_-]>+/;
     print "\rEstablishing back links... $b","($<old>)$x \x001b[K";
     TZ-LINK-FILE.spurt: "$<old>\n$<new>\n", :append;
 }
@@ -216,6 +227,7 @@ sub get-contents(IO() $folder) {
 
 my @resources = get-contents(TZif-DIR).map('TZif/' ~ *);
 @resources.push('links');
+@resources.push('zones');
 
 my $meta6 = META6.new(
         name         => <Timezones::ZoneInfo>,
@@ -247,7 +259,7 @@ my $meta6 = META6.new(
         license     => 'CC0-1.0',
 );
 
-META6-FILE.IO.spurt: $meta6.to-json;
+META6-FILE.IO.spurt: $meta6.to-json(:sorted-keys);
 say $g, "OK", $x;
 
 # Need to grab this before we clean up files.  No real logical place to put it flow wise.
@@ -267,7 +279,7 @@ TZ-ZIC-EXE.IO.unlink;
 say $g, "OK", $x, "\n";
 
 =begin pod
-The final step of the updated is to compare the old and new versions.
+The final step of the update is to compare the old and new versions.
 If the just-installed version is newer, then it's imperative that an
 incremental update be published.  Otherwise,
 =end pod
