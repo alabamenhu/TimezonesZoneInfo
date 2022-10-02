@@ -15,6 +15,9 @@ Given a `Time` object (only ymdHMS values are used), provides the associated POS
 
 All methods work on times with integral seconds. It is left to the end user to handle any fractional seconds.
 
+An additional method that is available is 
+  * **`sub timezones-as-set(:$standard = True, :$aliases = False, :$historical = False --> Set)`  
+This provides a list of all timezone identifiers as a set (if you need it as a list, `.keys`).  By default it only 
 # Class reference
 
 ### Timezones::ZoneInfo::Time
@@ -58,6 +61,11 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   
 # Version history
 
+  * 0.3.0
+    * Added new exported routine `timezones-as-set`
+    * Updated to 2022d version of the database (2022c did not have new tz data)
+      * Palestine will enter DST on Saturdays
+      * Ukraine zones simplified
   * 0.2.2
     * Updated to 2022b version of the database
       * Urgent update for Chile
