@@ -1,33 +1,28 @@
 {
+  "auth": "github:alabamenhu",
   "authors": [
     "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
   ],
-  "provides": {
-    "Timezones::ZoneInfo::TransTimeInfo": "lib/Timezones/ZoneInfo/TransTimeInfo.rakumod",
-    "Timezones::ZoneInfo::LeapSecInfo": "lib/Timezones/ZoneInfo/LeapSecInfo.rakumod",
-    "Timezones::ZoneInfo::ConvRule": "lib/Timezones/ZoneInfo/ConvRule.rakumod",
-    "Timezones::ZoneInfo::Routines": "lib/Timezones/ZoneInfo/Routines.rakumod",
-    "Timezones::ZoneInfo": "lib/Timezones/ZoneInfo.rakumod",
-    "CX::Warn::Timezones::UnknownID": "lib/CX/Warn/Timezones/UnknownID.rakumod",
-    "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo/Time.rakumod",
-    "Timezones::ZoneInfo::Link": "lib/Timezones/ZoneInfo/Link.rakumod",
-    "Timezones::ZoneInfo::State": "lib/Timezones/ZoneInfo/State.rakumod"
-  },
-  "auth": "git:alabamenhu",
-  "name": "Timezones::ZoneInfo",
-  "meta-version": "0",
   "build-depends": [
   ],
-  "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
-  "test-depends": [
-    "Test"
+  "depends": [
   ],
   "description": "A module providing timezone data and routines, based on IANA’s tz database and code",
-  "raku": "6.*",
-  "support": {
-    "source": "git://github.com/alabamenhu/TimezonesZoneInfo.git"
-  },
   "license": "CC0-1.0",
+  "meta-version": "0",
+  "name": "Timezones::ZoneInfo",
+  "provides": {
+    "CX::Warn::Timezones::UnknownID": "lib/CX/Warn/Timezones/UnknownID.rakumod",
+    "Timezones::ZoneInfo": "lib/Timezones/ZoneInfo.rakumod",
+    "Timezones::ZoneInfo::ConvRule": "lib/Timezones/ZoneInfo/ConvRule.rakumod",
+    "Timezones::ZoneInfo::LeapSecInfo": "lib/Timezones/ZoneInfo/LeapSecInfo.rakumod",
+    "Timezones::ZoneInfo::Link": "lib/Timezones/ZoneInfo/Link.rakumod",
+    "Timezones::ZoneInfo::Routines": "lib/Timezones/ZoneInfo/Routines.rakumod",
+    "Timezones::ZoneInfo::State": "lib/Timezones/ZoneInfo/State.rakumod",
+    "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo/Time.rakumod",
+    "Timezones::ZoneInfo::TransTimeInfo": "lib/Timezones/ZoneInfo/TransTimeInfo.rakumod"
+  },
+  "raku": "6.*",
   "resources": [
     "TZif/Indian/Mauritius",
     "TZif/Indian/Chagos",
@@ -503,15 +498,21 @@
     "TZif/Africa/Freetown",
     "TZif/Factory",
     "TZif/HST",
-    "links"
+    "links",
+    "zones"
   ],
+  "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
+  "support": {
+    "source": "git://github.com/alabamenhu/TimezonesZoneInfo.git"
+  },
   "tags": [
     "timezones",
     "olson",
     "tz",
     "tzdb"
   ],
-  "depends": [
+  "test-depends": [
+    "Test"
   ],
-  "version": "0.2.2"
+  "version": "0.2.3"
 }
