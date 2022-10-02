@@ -1,7 +1,7 @@
 # Timezones::ZoneInfo
 A Raku module containing data (as well as some support routines) based on IANA's TZ database
 
-Current IANA database version: **2022a** 
+Current IANA database version: **2022d** 
 
 # Usage
 There are three exported subs that will be the most commonly used.  Advanced users may wish to view the `Routines` submodule for more options.
@@ -16,8 +16,8 @@ Given a `Time` object (only ymdHMS values are used), provides the associated POS
 All methods work on times with integral seconds. It is left to the end user to handle any fractional seconds.
 
 An additional method that is available is 
-  * **`sub timezones-as-set(:$standard = True, :$aliases = False, :$historical = False --> Set)`  
-This provides a list of all timezone identifiers as a set (if you need it as a list, `.keys`).  By default it only 
+  * **`sub timezones-as-set(:$standard = True, :$aliases = False, :$historical = False --> Set)`**  
+This provides a list of all timezone identifiers as a set (if you need it as a list, `.keys`).  By default it does not include various aliases (generally, but not always, spell changes in identifiers like *Kiev*→*Kyiv*).  Historical zones are those that go back to the early part of the 20th century and farther back and rarely if ever needed.  They are currently NYI.
 # Class reference
 
 ### Timezones::ZoneInfo::Time
