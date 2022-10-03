@@ -276,7 +276,7 @@ method new (blob8 $tz, :$name) {
         @ttisstd.push: so ( $tz[$pos] == 1);
         $pos++;
     }
-    say "     - " ~ @ttisstd.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisstd);
+    say "     - " ~ @ttisstd.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisstd) if $*TZDEBUG;
 
     say "  9. Collecting gmy v local indicators" if $*TZDEBUG;
     # Collect Universal/GMT vs local indicator indices, 1 = true";
@@ -285,7 +285,7 @@ method new (blob8 $tz, :$name) {
         @ttisgmt.push: so ($tz[$pos] == 1);
         $pos++;
     }
-    say "     - " ~ @ttisgmt.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisgmt);
+    say "     - " ~ @ttisgmt.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisgmt) if $*TZDEBUG;
 
     # Now that the standard/wall, universal/local, and rulesets
     # have been collected, we can compose the actual transition time

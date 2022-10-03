@@ -60,7 +60,8 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
-
+  * 0.3.1
+    * Debug-mode–guarded some code that was spitting random hyphens
   * 0.3.0
     * Added new exported routine `timezones-as-set`
     * Updated to 2022d version of the database (2022c did not have new tz data)
