@@ -39,25 +39,27 @@ First we have a few constants:
 =end pod
 constant $updater-version = '0.6.0';
 constant $module-version  = '0.1.2';
-constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= The location of tz data on the WWW
-constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= The location of tz code on the WWW
-constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe
-                             factory northamerica southamerica>; #pacificnew removed in 2020b
-constant TZ-ZIC-FILES     = <zic.c private.h tzfile.h version>;
+constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= TZ data download URL
+constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= TZ code download URL
+constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera
+                            europe factory northamerica southamerica>;    #= Files with zone data (pacificnew removed in 2020b)
+constant TZ-ZIC-FILES     = <zic.c private.h tzfile.h version>;           #= Files to be cleaned up
 
-my \TZ-BIN-DIR     = $*PROGRAM.parent.add('update/bin').resolve;       #= Where the tz utility should compile to
-my \TZ-DL-DIR      = $*PROGRAM.parent.add('update/download').resolve;  #= Where tz files should be downloaded to
-my \TZ-DATA-DL     = $*PROGRAM.parent.add('update/download/tzdata-latest.tar.gz').resolve.Str; #= Where the tz data ought to be downloaded
-my \TZ-CODE-DL     = $*PROGRAM.parent.add('update/download/tzcode-latest.tar.gz').resolve.Str; #= Where the tz code ought to be downloaded
-my \TZ-DATA-DIR    = $*PROGRAM.parent.add('update/data/').resolve.Str; #= Where the tz data will expand to
-my \TZif-DIR       = $*PROGRAM.parent.add('TZif').resolve.Str; #= Where compiled tz data files will go
-my \TZ-LEAPSECONDS = $*PROGRAM.parent.add('update/data/leapseconds').resolve.Str; #= Where leapseconds data is stored
-my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str; #= Timezones::ZoneInfo's current META6 file
-my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str; #= File with the previous version of tz data compiled
-my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str; #= The location of the executable zic utility
+# Build paths ( .parent = tools/ )
+my \TZ-BIN-DIR     = $*PROGRAM.parent.add('update/bin').resolve;                               #= TZ utility compile directory
+my \TZ-DL-DIR      = $*PROGRAM.parent.add('update/download').resolve;                          #= TZ files download directory
+my \TZ-DATA-DL     = $*PROGRAM.parent.add('update/download/tzdata-latest.tar.gz').resolve.Str; #= TZ data download file
+my \TZ-CODE-DL     = $*PROGRAM.parent.add('update/download/tzcode-latest.tar.gz').resolve.Str; #= TZ code download file
+my \TZ-DATA-DIR    = $*PROGRAM.parent.add('update/data/').resolve.Str;                         #= TZ data expansion directory
+my \TZ-LEAPSECONDS = $*PROGRAM.parent.add('update/data/leapseconds').resolve.Str;              #= Leapseconds data file
+my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str;                    #= Most recent TZ metadata file
+my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str;                       #= Executable zic utility file
 my \TZ-BACK-FILE   = $*PROGRAM.parent.add('update/data/backward').resolve.Str;
-my \TZ-LINK-FILE   = $*PROGRAM.parent.add('links').resolve.Str.IO; #= A file (newline delimited) with pairs of alias names to real names
-my \TZ-ZONE-FILE   = $*PROGRAM.parent.add('zones').resolve.Str.IO; #= A file that lists each available timezone
+# Product paths
+my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str;         #= Timezones::ZoneInfo's current META6 file
+my \TZif-DIR       = $*PROGRAM.parent.parent.add('resources/TZif').resolve.Str;     #= Where compiled tz data files will go
+my \TZ-LINK-FILE   = $*PROGRAM.parent.parent.add('resources/links').resolve.Str.IO; #= A file (newline delimited) with pairs of alias names to real names
+my \TZ-ZONE-FILE   = $*PROGRAM.parent.parent.add('resources/zones').resolve.Str.IO; #= A file that lists each available timezone
 
 # Because I like teh pretty
 constant $g     = "\x001b[32m";
@@ -144,7 +146,6 @@ unless my $proc = run(<gcc -Wall update/data/zic.c -o update/bin/zic>, :cwd($*PR
 }
 say $g, "OK", $x;
 
-
 =begin pod
 With ZIC compiled, we begin processing the data files.  Each of the
 regional files (Europe, Asia, etc) contain dozens of different zones
@@ -160,7 +161,7 @@ TZ-ZONE-FILE.spurt: ""; # clear old
 for TZ-ZONE-FILES<> -> $zone {
     print "\rProcessing zone files... $b","($zone)$x \x001b[K";
     unless my $proc = run(
-            TZ-ZIC-EXE,
+            TZ-ZIC-EXE, '-b','slim',
             '-d', TZif-DIR,
             '-L', TZ-LEAPSECONDS,
              "{TZ-DATA-DIR}/$zone", :err) {

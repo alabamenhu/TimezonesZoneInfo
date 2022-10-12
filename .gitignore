@@ -14,5 +14,5 @@ lib/.precomp
 .idea
 *.iml
 # C code to be built from
-/resources/update/tzcode-latest/
+/tools/update/tzcode-latest/
 /resources/tzdata-latest/
