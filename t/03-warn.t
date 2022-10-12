@@ -1,10 +1,12 @@
 use Test;
-#use Timezones::ZoneInfo;
+#`<<<
+# This test is currently disabled pending warning system overhaul
+
+use Timezones::ZoneInfo;
 use CX::Warn::Timezones::UnknownID;
-my $*TZDEBUG = True;
 use Timezones::ZoneInfo::TransTimeInfo;
 use Timezones::ZoneInfo::LeapSecInfo;
-#`<<<
+
 class Foo {
     my $TZ_MAX_TIMES = 2000;
     has int32         $.leapcnt = 0;     #= Number of leap seconds (e.g. +@!lsis)

@@ -2,14 +2,10 @@ use Test;
 use Timezones::ZoneInfo::Time;
 use Timezones::ZoneInfo;
 
-# Known GMT times
-# 1577934245 : 2020-01-02 03:04:05
-# 1589025600 :
-#  467372577 : c
-#  703723256 : 1992-04-19 22:40:56
-
+# Additional times (with associated tests) would be great here.
+# If more timezones are added, they could then be grouped by tz (or timestamp).
 my $t1 = 1577934245; # 2020-01-02 03:04:05
-my $t2 =  467372577; # 1992-04-19 22:40:56
+my $t2 =  467372577; # 1984-10-23 09:42:57
 my $t3 =  703723256; # 1992-04-19 22:40:56
 
 sub time-cmp(Time \a, Time \b) {
