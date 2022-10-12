@@ -499,7 +499,9 @@
     "TZif/Factory",
     "TZif/HST",
     "links",
-    "zones"
+    "zones",
+    "posix-max",
+    "posix-min"
   ],
   "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
   "support": {
@@ -514,5 +516,5 @@
   "test-depends": [
     "Test"
   ],
-  "version": "0.3.1"
+  "version": "0.4.0"
 }
