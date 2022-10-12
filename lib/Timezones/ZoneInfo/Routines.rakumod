@@ -68,14 +68,20 @@ use Timezones::ZoneInfo::Time;
 use Timezones::ZoneInfo::LeapSecInfo;
 
 #| These variables names match localtime's localsub's
-sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = Time.new, :$leapadjusted = False --> Time) is export {
+sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?]Time $tmp = Time.new, :$leapadjusted = False --> Time) is export {
     my TransTimeInfo $ttisp;
     my int64         $i;
     my Time          $result;
 
+	say "Beginning POSIX to calendar conversion" if $*TZDEBUG;
+	say "  1. Input time = $t" if $*TZDEBUG;
     $t = posix2time($sp, $t) unless $leapadjusted;
+	say "  2. Leap adjst = $t" if $*TZDEBUG;
+
+	say "  3. Does the timezone file loop?" if $*TZDEBUG;
     if $sp.go-back  && $t < $sp.ats.head
     || $sp.go-ahead && $t > $sp.ats.tail {
+		say "     - yes" if $*TZDEBUG;
         my time $newt;
         my time	$seconds;
         my time	$years;
@@ -108,27 +114,36 @@ sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?] Time $tmp = T
             $result.year = $newy;
         }
         return $result;
-    }
+    } else {
+		say "     - no" if $*TZDEBUG;
+	}
 
+	say "  4. Searching for transition time" if $*TZDEBUG;
     if $sp.time-count == 0
     || $t < $sp.ats.head {
         # TODO HANDLE A 0 TIME COUNT
         # die "Highly unlikely situation at line {$?LINE}, sp has {$sp.type-count} types";
 		$i = 0; # $sp.default-type; # this shouldn't happen often
 	} else {
+		# Binary search to locate the transition
+		# (we'll adjust by its gmt-offset)
 		my int64 $lo = 1;
 		my int64 $hi = $sp.time-count;
 
 		while $lo < $hi {
 			my int64 $mid = ($lo + $hi) div 2;
 			if   $t < $sp.ats[$mid] { $hi = $mid    }
-			else	                { $lo = $mid + 1};
+			else	                                            { $lo = $mid + 1};
 		}
+		say "     - last adjust at posix ", $sp.ats[$lo - 1], " GMT ", DateTime.new($sp.ats[$lo - 1]) if $*TZDEBUG;
+		say "     - next adjust at posix ", $sp.ats[$lo], " GMT ", DateTime.new($sp.ats[$lo]) if $*TZDEBUG;
 		$i = $sp.types[$lo - 1];
 	}
 	$ttisp = $sp.ttis[$i];
+	say "     - offset is {$ttisp.utoffset}" if $*TZDEBUG;
 
-	$result = timesub($t, $ttisp.utoffset, $sp, $tmp);
+	# TODO: should this be negative offset here?
+	$result = timesub($t, - $ttisp.utoffset, $sp, $tmp);
 	if $result {
 	  $result.dst = $ttisp.is-dst;
 	  $result.tz-abbr = $ttisp.abbr; # shortcut for &sp->chars[ttisp->tt_desigidx] + parsing
@@ -168,6 +183,8 @@ sub timesub(time $timep is rw, int32 $offset, State $sp, Time:D $tmp --> Time) {
 	# If less than SECSPERMIN, the number of seconds since the
     # most recent positive leap second; otherwise, do not add 1
     # to localtime tm_sec because of leap seconds.
+	#
+	# Then simply scan for the most recent leapsecond (there's only currently 27)
 
     my time $secs_since_posleap = $SECSPERMIN;
 
