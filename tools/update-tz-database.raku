@@ -229,6 +229,8 @@ sub get-contents(IO() $folder) {
 my @resources = get-contents(TZif-DIR).map('TZif/' ~ *);
 @resources.push('links');
 @resources.push('zones');
+@resources.push('posix-max');
+@resources.push('posix-min');
 
 my $meta6 = META6.new(
         name         => <Timezones::ZoneInfo>,
