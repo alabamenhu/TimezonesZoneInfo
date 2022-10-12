@@ -1,0 +1,44 @@
+use v6.d;
+use Timezones::ZoneInfo :constants, :tz-shift;
+use Test;
+
+my $z1 = timezone-data 'America/New_York';
+my $z2 = timezone-data 'Europe/Berlin';
+my $z3 = timezone-data 'Etc/GMT';
+
+my $d1 = DateTime.new(2022, 9, 1, 0, 0, 0).posix;
+my $d2 = DateTime.new(4022, 9, 1, 0, 0, 0).posix; # to check for loop forward
+my $d3 = DateTime.new(   0, 9, 1, 0, 0, 0).posix; # to check for loop forward
+
+# For these days, the contemporary time should match our expectations.
+# For the future, the assumption is that the current changes continue ad infinitum
+# given the status quo (the gregorian calendar loops every 400 years, so the difference
+# for these checks is easiest by using contemporary + X * 400 years.
+# The far past check should always match the FIRST noted transition time -- 1908 is the
+# time DST was used anywhere.
+is next-tz-shift($d1, $z1),  1667714400, 'Contemporary era jump - New York';
+is next-tz-shift($d2, $z1), 64781618400, 'Far future era jump - New York';
+is next-tz-shift($d3, $z1), -1633280400, 'Far past era jump - New York'; # March 31st, 1918 @ 7:00am GMT
+is next-tz-shift($d1, $z2),  1667091600, 'Contemporary era jump - Berlin';
+is next-tz-shift($d2, $z2), 64780995600, 'Far future era jump - Berlin';
+is next-tz-shift($d3, $z2), -1693706400, 'Far past era jump - Berlin'; # April 30th, 1916 @ 10:00pm GMT
+
+# Etc/GMT is a weird one, since it has no timezones per se, jumping forward should always
+# return max-time
+is next-tz-shift($d1, $z3), max-posix-time, 'Contemporary era jump - GMT';
+is next-tz-shift($d2, $z3), max-posix-time, 'Far future era jump - GMT';
+is next-tz-shift($d3, $z3), max-posix-time, 'Far past era jump - GMT';
+
+# The rules in reverse work the same way, except it's more likely to encounter min-posix-time
+is prev-tz-shift($d1, $z1),        1647154800, 'Contemporary era jump - New York';
+is prev-tz-shift($d2, $z1),       64761058800, 'Far future era jump - New York';
+is prev-tz-shift($d3, $z1),    min-posix-time, 'Far past era jump - New York';
+is prev-tz-shift($d1, $z2),        1648342800, 'Contemporary era jump - Berlin';
+is prev-tz-shift($d2, $z2),       64762246800, 'Extreme future era jump - Berlin';
+is prev-tz-shift($d3, $z2),    min-posix-time, 'Far past era jump - Berlin';
+
+is prev-tz-shift($d1, $z3), min-posix-time, 'Contemporary era jump - GMT';
+is prev-tz-shift($d2, $z3), min-posix-time, 'Far future era jump - GMT';
+is prev-tz-shift($d3, $z3), min-posix-time, 'Far past era jump - GMT';
+
+done-testing;
