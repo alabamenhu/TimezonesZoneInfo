@@ -87,6 +87,7 @@ grammar Posix-TZ {
     token offset { $<sign>=<[-+]>? <time> }
 
     token time {
+        '-'?
 	         $<hour>   = <.number>
 	    [':' $<minute> = <.number>]?
         [':' $<second> = <.number>]?
@@ -146,12 +147,15 @@ method new (blob8 $tz, :$name) {
         # Version 2+ files include a version 1 file for backwards
         # compatibility, but then have a second copy with larger
         # integer sizes, so we scan the file to find that header.
+        # The header's value is TZif followed by the version number
+        # in ASCII, or $VERSION + 48
+        my $head-version = $VERSION + 48;
         for 1..^$tz.elems -> $i {
-            next unless $tz[$i    ] == 0x54  # T
-                     && $tz[$i + 1] == 0x5A  # Z
-                     && $tz[$i + 2] == 0x69  # i
-                     && $tz[$i + 3] == 0x66  # f
-                     && $tz[$i + 4] == 0x32; # 2
+            next unless $tz[$i    ] == 0x54           # T
+                     && $tz[$i + 1] == 0x5A           # Z
+                     && $tz[$i + 2] == 0x69           # i
+                     && $tz[$i + 3] == 0x66           # f
+                     && $tz[$i + 4] == $head-version; # 2/3/4
             $pos = $i + 20;
             last;
         }
@@ -191,13 +195,14 @@ method new (blob8 $tz, :$name) {
                 ?? $tz.read-int32($pos, BigEndian)
                 !! $tz.read-int64($pos, BigEndian);
         $pos += 4 * ($VERSION == 1 ?? 1 !! 2); # 4 or 8
+        say "     - ", DateTime.new(@ats[$_], :0timezone), "({@ats[$_]})" if $*TZDEBUG;
     }
 
     # Next, each one of these moments has an associated rule that
     # dictates, e.g., whether it's daylight savings time or how much
     # it is offset from GMT.
     # TYPES = tranisition time meta data (
-    print "  4. Reading associated rules\n     - " if $*TZDEBUG;
+    say "  4. Reading associated rules" if $*TZDEBUG;
     my int8 @types;
     for ^$timecnt {
         @types.push($tz.read-int8: $pos);
@@ -278,7 +283,7 @@ method new (blob8 $tz, :$name) {
     }
     say "     - " ~ @ttisstd.map({ (so $_) ?? "1" !! "0"}).join ~ ('none' unless @ttisstd) if $*TZDEBUG;
 
-    say "  9. Collecting gmy v local indicators" if $*TZDEBUG;
+    say "  9. Collecting gmt v local indicators" if $*TZDEBUG;
     # Collect Universal/GMT vs local indicator indices, 1 = true";
     my Bool @ttisgmt;
     for ^$ttisgmtcnt {
@@ -303,7 +308,7 @@ method new (blob8 $tz, :$name) {
                 is-ut      => @ttisgmt[$i] // False,
                 abbr       => (%tz-abbr-temp{@ttinfo-temp[$i].abbr-index} // ''); # <-- TODO: this is a quick fix for America/Adak which isn't reading the strings properly
         with @ttis.tail {
-            say "     - {.abbr} is {.is-dst ?? 'dst' !! 'std'} at {.utoffset}" if $*TZDEBUG;
+            say "     - $_" if $*TZDEBUG;
         }
     }
 
@@ -317,13 +322,19 @@ method new (blob8 $tz, :$name) {
     if $pos < $tz.elems {
         my %ts := Hash.new: ttis => Array.new, ats => Array.new, types => Array.new;
         my %basep = :$timecnt, :@ats, :@lsis, :$leapcnt;
-        say "  11.Processing extent tz code (via posix string)" if $*TZDEBUG;
+        say "  11.Processing extended tz code (via posix string)" if $*TZDEBUG;
         tzparse(
             $tz.subbuf($pos + 1).decode,  # TZ string to parse
             %ts,                          # this will get populated and read later
             %basep
         );
-        say "     - parse complete" if $*TZDEBUG;
+        if $*TZDEBUG {
+            say "     - parse complete ";
+            say "     - New transition times:";
+            say "       - ", DateTime.new($_,:0timezone), " ({$_})" for %ts<ats>[^100];
+            say "     - New transition times infos:";
+            say "       - ", $_ for %ts<ttis><>;
+        }
         # At this point, @ats[$timecnt - 1] is the final explicit transition time
         # %ts<ats>[0..*] represent the continuation
 
@@ -442,9 +453,13 @@ method equiv-to {
 
 	$stdname = $name; # stdname = name;
 	my \match = Posix-TZ.parse($name.chomp);
+    say "     - {$name.chomp}"  if $*TZDEBUG;
+    say "     - {match ?? 'parsed' !! 'not parsed'}" if $*TZDEBUG;
 
 	$stdname = ~match<std-name>;
-	$stdoffset = - seconds-from-time ~match<std-off>; # negative because it's hours behind GMT
+    # NEGATIVE?
+	$stdoffset = seconds-from-time ~match<std-off>; # negative because it's hours behind GMT
+    say "     - Standard offset is {match<std-off>} ({$stdoffset / 3600}h)" if $*TZDEBUG;
     if ($basep) {
         if (0 < $basep<timecnt>) {
             $atlo = $basep<ats>[$basep<timecnt> - 1]
@@ -484,8 +499,9 @@ method equiv-to {
         with match<dst-offset> {
             $dstoffset = - seconds-from-time ~match<dst-offset> # negative because it's hours behind GMT
         } else {
-            $dstoffset = $stdoffset + 3600; # one hour by default
+            $dstoffset = $stdoffset - 3600; # one hour by default
         }
+        say "     - Daylight offset is {match<dst-offset> // '…'} ({$dstoffset / 3600}h)" if $*TZDEBUG;
 
         with match<default-trans> {
             #`<<< Default rule string is ',M3.2.0,M11.1.0'
