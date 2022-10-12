@@ -226,7 +226,7 @@ sub get-contents(IO() $folder) {
     @result;
 }
 
-my @resources = get-contents(TZif-DIR).map('TZif/' ~ *);
+my @resources = get-contents(TZif-DIR).map('TZif/' ~ *).grep(none /DS_Store/);
 @resources.push('links');
 @resources.push('zones');
 @resources.push('posix-max');
