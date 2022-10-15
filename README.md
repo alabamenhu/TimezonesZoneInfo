@@ -1,9 +1,9 @@
 # Timezones::ZoneInfo
 A Raku module containing data (as well as some support routines) based on IANA's TZ database.
 This module is not normally expected to be consumed on its own — it is designed to be as light weight as possible.
-Its intended use is for authors of various time-related tools.
+Its intended use is for authors of various time-related tools. 
 
-Current IANA database version: **2022d** 
+Current IANA database version: **2022e** 
 
 # Usage
 The first four subs are exported by default.  All methods work on times with integral seconds. It is currently left to the end user to handle any fractional seconds.
@@ -24,21 +24,11 @@ Given either a `Time` object (only ymdHMS values are used) or a POSIX `time_t` t
   * **`sub prev-tz-shift (Time|int64 $time, State $tz-data, :$leapadjust = False --> Time|int64)`**  
 Same as `next-tz-shift` but in reverse.  Finds the most recent previous shift in timezone data.
 
-Both `next-tz-shift` and `prev-tz-shift` can potentially return a special `DateTime` subclass.  If there are no changes, a `False`-y, undefined `DateTime` whose comparison value is the most future/past date possible is returned.  For instance
-  
-    use Timezones::ZoneInfo :shift;
-    my $tz       = timezone-data 'Etc/GMT';
-    my $time     = DateTime.now.posix;
-    my $change-a = next-tz-shift $time, $tz;
-    
-    say "falsey"    unless  $change;
-    say "undefined" without $change;
-    say $change.posix;               # 2⁶³ - 28; max-int - @leapseconds
-
-This way, you can structure things in the format of `if next-tz-shift($time,$tz) -> $change { ... }` when that's more useful, but it still can be compared.
-The idea is to be a sort of "infinite future" and "infinite past", but current `DateTime` implementations make that not possible.
-The module will detect your system's maximum and minimum time values upon installation.
-Those values can be obtained using the constants `max-posix-time` and `min-posix-time` (exported with `:constants` in the `use` statement)
+Both `next-tz-shift` and `prev-tz-shift` can potentially return a special extremely small or large integer value.  
+Such values are intended to represent an “infinite” past or future, but may be different given compiler/architecture/system.
+`Timezones::ZoneInfo` will detect your system's maximum and minimum time values upon installation and those
+values can be obtained using the constants `max-posix-time` and `min-posix-time` (exported with `:constants` in the `use` statement).
+On my system, for instance, these are **2<sup>63</sup> - 1 - 27**, and **0 - 2<sup>63</sup>**, where 27 is the current number of leapseconds.
 
 # Class reference
 
@@ -87,6 +77,9 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
     * Fixed a major calculation bug in interpreting POSIX tz strings
     * New tests to guard against future bugs
     * Moved maintenance tools out of `resources` and into `tools` (they aren't needed at runtime)
+    * Updated to 2022e version of the database
+      * Jordan and Syria will now observe DST year round
+      * Minor fixes for historical data in Mexico
   * 0.3.1
     * Debug-mode–guarded some code that was spitting random hyphens
   * 0.3.0
