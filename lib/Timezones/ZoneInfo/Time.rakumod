@@ -15,7 +15,7 @@ has str   $.tz-abbr    is rw = ""; #=         (Timezone abbreviation NULL AFTER 
 multi method gist(::?CLASS:D:) {
     ~ ($!year+1900)
     ~ "-"
-    ~ ('0' if $!month < 10) ~ ($!month+1)
+    ~ ('0' if $!month < 9) ~ ($!month+1)
     ~ "-"
     ~ ('0' if $!day < 10) ~ $!day
     ~ " at "
