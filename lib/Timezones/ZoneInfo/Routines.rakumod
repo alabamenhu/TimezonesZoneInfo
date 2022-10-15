@@ -143,7 +143,7 @@ sub localsub( State $sp, time $t is copy, #`[$setname, ←unused?]Time $tmp = Ti
 	say "     - offset is {$ttisp.utoffset}" if $*TZDEBUG;
 
 	# TODO: should this be negative offset here?
-	$result = timesub($t, - $ttisp.utoffset, $sp, $tmp);
+	$result = timesub($t, $ttisp.utoffset, $sp, $tmp);
 	if $result {
 	  $result.dst = $ttisp.is-dst;
 	  $result.tz-abbr = $ttisp.abbr; # shortcut for &sp->chars[ttisp->tt_desigidx] + parsing

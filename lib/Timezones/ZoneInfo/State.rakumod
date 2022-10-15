@@ -322,6 +322,7 @@ method new (blob8 $tz, :$name) {
     if $pos < $tz.elems {
         my %ts := Hash.new: ttis => Array.new, ats => Array.new, types => Array.new;
         my %basep = :$timecnt, :@ats, :@lsis, :$leapcnt;
+
         say "  11.Processing extended tz code (via posix string)" if $*TZDEBUG;
         tzparse(
             $tz.subbuf($pos + 1).decode,  # TZ string to parse
@@ -458,7 +459,7 @@ method equiv-to {
 
 	$stdname = ~match<std-name>;
     # NEGATIVE?
-	$stdoffset = seconds-from-time ~match<std-off>; # negative because it's hours behind GMT
+	$stdoffset = -seconds-from-time ~match<std-off>; # negative because it's hours behind GMT
     say "     - Standard offset is {match<std-off>} ({$stdoffset / 3600}h)" if $*TZDEBUG;
     if ($basep) {
         if (0 < $basep<timecnt>) {
@@ -474,7 +475,6 @@ method equiv-to {
     if (0 < $sp<leapcnt>) {
         $leaplo = $sp<lsis>[$sp<leapcnt> - 1].transition;
     }
-
     # $leaplo is the moment of the last leapsecond
     # $atlo should be the time of the last fixed timezone (or dst) transition
 
@@ -497,9 +497,9 @@ method equiv-to {
 		>>>
 
         with match<dst-offset> {
-            $dstoffset = - seconds-from-time ~match<dst-offset> # negative because it's hours behind GMT
+            $dstoffset = -seconds-from-time ~match<dst-offset> # negative because it's hours behind GMT
         } else {
-            $dstoffset = $stdoffset - 3600; # one hour by default
+            $dstoffset = $stdoffset + 3600; # one hour by default
         }
         say "     - Daylight offset is {match<dst-offset> // '…'} ({$dstoffset / 3600}h)" if $*TZDEBUG;
 
@@ -640,8 +640,8 @@ method equiv-to {
 
         loop ($year = $yearbeg; $year < $yearlim; $year++) {
             # for (year = yearbeg; year < yearlim; year++) {
-            my int32 $starttime = transtime($year, $start, $stdoffset);
-            my int32 $endtime   = transtime($year, $end, $dstoffset);
+            my int32 $starttime = transtime($year, $start, -$stdoffset);
+            my int32 $endtime   = transtime($year, $end, -$dstoffset);
             my int32 $yearsecs  = @year_lengths[isleap($year)] * $SECSPERDAY;
             my int8  $reversed  = $endtime < $starttime;
 
