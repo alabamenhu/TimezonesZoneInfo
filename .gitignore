@@ -16,3 +16,6 @@ lib/.precomp
 # C code to be built from
 /tools/update/tzcode-latest/
 /resources/tzdata-latest/
+# Files made on install
+/resources/posix-max
+/resources/posix-min
