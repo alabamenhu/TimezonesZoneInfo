@@ -3,7 +3,9 @@ A Raku module containing data (as well as some support routines) based on IANA's
 This module is not normally expected to be consumed on its own — it is designed to be as light weight as possible.
 Its intended use is for authors of various time-related tools. 
 
-Current IANA database version: **2022e** 
+Current IANA database version: **2022f** 
+
+When updating this module, ensure all modules that depend on it are recompiled.
 
 # Usage
 The first four subs are exported by default.  All methods work on times with integral seconds. It is currently left to the end user to handle any fractional seconds.
