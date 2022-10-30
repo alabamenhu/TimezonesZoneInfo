@@ -37,8 +37,8 @@ steps to be performed manually in case something is causing them problems.
 
 First we have a few constants:
 =end pod
-constant $updater-version = '0.6.0';
-constant $module-version  = '0.1.2';
+constant $updater-version = '0.6.1';
+constant $module-version  = '0.4.1';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= TZ data download URL
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= TZ code download URL
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera
@@ -243,7 +243,7 @@ my $meta6 = META6.new(
         resources    => @resources,
         tags         => <timezones olson tz tzdb>,
         authors      => ['Matthew Stephen STUCKWISCH <mateu@softastur.org>'],
-        auth         => 'github:alabamenhu',
+        auth         => 'zef:guifa',
         source-url   => 'git://github.com/alabamenhu/TimezonesZoneInfo.git',
         support      => META6::Support.new(
             source => 'git://github.com/alabamenhu/TimezonesZoneInfo.git'
