@@ -72,6 +72,10 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.4.1
+    * Updated to 2022f version of the database
+      * Mexico and Fiji no longer observes DST in most areas
+      * `GMT` is now the standard form for `Etc/GMT` (both will still work)
   * 0.4.0
     * Add new feature to find previous/next shifts in timezone (`next-tz-rule-change` and `prev-tz-rule-change`)
     * Fixed a major calculation bug in interpreting POSIX tz strings
