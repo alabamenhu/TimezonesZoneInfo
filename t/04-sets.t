@@ -1,6 +1,6 @@
 use Test;
 
-use Timezones::ZoneInfo;
+use Timezones::ZoneInfo:auth<zef:guifa>;
 
 my Set $standard = timezones-as-set;
 my Set $all      = timezones-as-set :aliases;

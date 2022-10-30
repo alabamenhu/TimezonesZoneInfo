@@ -1,5 +1,5 @@
 use v6.d;
-use Timezones::ZoneInfo;
+use Timezones::ZoneInfo:auth<zef:guifa>;
 use Test;
 
 # This file fixes former known bugs to ensure they don't pop back up.

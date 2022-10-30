@@ -1,6 +1,6 @@
 use Test;
-use Timezones::ZoneInfo::Time;
-use Timezones::ZoneInfo;
+use Timezones::ZoneInfo::Time:auth<zef:guifa>;
+use Timezones::ZoneInfo:auth<zef:guifa>;
 
 #| Compares two separate Time objects, returning an Order enum value
 sub time-cmp(Time \a, Time \b) {

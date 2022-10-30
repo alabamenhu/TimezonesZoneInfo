@@ -1,4 +1,4 @@
-use Timezones::ZoneInfo;
+use Timezones::ZoneInfo:auth<zef:guifa>;
 use Test;
 my @timezones = <Etc/GMT America/New_York America/Los_Angeles Europe/Madrid
                  Asia/Tokyo Africa/Kinshasa Africa/Mogadishu Asia/Qatar Asia/Singapore>;

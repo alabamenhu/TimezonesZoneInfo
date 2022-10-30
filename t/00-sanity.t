@@ -1,5 +1,5 @@
 use Test;
-use Timezones::ZoneInfo;
+use Timezones::ZoneInfo:auth<zef:guifa>;
 
 ok True;
 

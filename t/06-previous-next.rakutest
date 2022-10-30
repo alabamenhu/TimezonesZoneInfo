@@ -1,5 +1,5 @@
 use v6.d;
-use Timezones::ZoneInfo :constants, :tz-shift;
+use Timezones::ZoneInfo:auth<zef:guifa> :constants, :tz-shift;
 use Test;
 
 my $z1 = timezone-data 'America/New_York';
