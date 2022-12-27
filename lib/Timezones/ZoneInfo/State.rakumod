@@ -187,7 +187,7 @@ method new (blob8 $tz, :$name) {
     # nominal zones, e.g. eastern to central).  These represent seconds
     # from the epoch.
     # ATS = AtTime(Stuct) (a transition time)
-    say "  3. Reading Transition times" if $*TZDEBUG;
+    say "  3. Reading Transition times ($timecnt total)" if $*TZDEBUG;
     my int64 @ats[$TZ_MAX_TIMES];
     for ^$timecnt {
         @ats[$_] =
@@ -236,6 +236,7 @@ method new (blob8 $tz, :$name) {
 
     # Now we read in each of the ttinfos, or "Time Transition Information"
     # storing them temporarily until we can fully compose it.
+    say "  5. Reading transition time metadata" if $*TZDEBUG;
     my @ttinfo-temp;
     for ^$typecnt {
         @ttinfo-temp.push: TransTimeInfoTemp.new($tz.subbuf: $pos, 6);
@@ -256,7 +257,7 @@ method new (blob8 $tz, :$name) {
         my $tmp = 0;
         $tmp++ while $tz[$pos + $anchor + $tmp] != 0; # scan to the next null terminator
         %tz-abbr-temp{$anchor} := $tz.subbuf($pos + $anchor, $tmp).decode; # ASCII-encoded, so default UTF-8 is identical
-        say "     - " ~ $tz.subbuf($pos + $anchor, $tmp).decode if $*TZDEBUG;
+        say "     - 【" ~ $tz.subbuf($pos + $anchor, $tmp).decode ~ '】' if $*TZDEBUG;
         $anchor += $tmp + 1;
     }
 
@@ -330,15 +331,12 @@ method new (blob8 $tz, :$name) {
             %basep
         );
         if $*TZDEBUG {
-            say "     - parse complete ";
-            say "     - New transition times:";
-            say "       - ", DateTime.new($_,:0timezone), " ({$_})" for %ts<ats>[^100];
-            say "     - New transition times infos:";
-            say "       - ", $_ for %ts<ttis><>;
+            say "     - New transition times ({%ts<timecnt>} total):";
+            say "       - ", DateTime.new(%ts<ats>[$_],:0timezone), " ({$_})" for ^%ts<timecnt>;
+            say "     - New transition times infos ({%ts<ttis>.elems} total):";
         }
         # At this point, @ats[$timecnt - 1] is the final explicit transition time
         # %ts<ats>[0..*] represent the continuation
-
         my int32 $gotabbr = 0; # probably unnecessary because of Raku string handling
         # my int32 charcnt # unneeded for Raku version
         loop (my $i = 0; $i < %ts<typecnt>; $i++) {
@@ -387,7 +385,7 @@ method new (blob8 $tz, :$name) {
         }
     }
 
-    say "  12.Checking for forward/backward looping" if $*TZDEBUG;
+    say "  12. Checking for forward/backward looping" if $*TZDEBUG;
     # check for go ahead and go back here
     die if $typecnt == 0;
     if $timecnt > 1 {
@@ -465,6 +463,7 @@ method equiv-to {
         if (0 < $basep<timecnt>) {
             $atlo = $basep<ats>[$basep<timecnt> - 1]
         }
+        say "     - Most recent transition at $atlo"  if $*TZDEBUG;
         $load_ok = 0; # false
         $sp<leapcnt> = $basep<leapcnt>;
         $sp<lsis> = $basep<lsis>;
@@ -504,6 +503,7 @@ method equiv-to {
         say "     - Daylight offset is {match<dst-offset> // '…'} ({$dstoffset / 3600}h)" if $*TZDEBUG;
 
         with match<default-trans> {
+            say "default transition" if $*TZDEBUG;
             #`<<< Default rule string is ',M3.2.0,M11.1.0'
 		    if (*name == '\0' && !load_ok)
 			name = TZDEFRULESTRING;
@@ -778,6 +778,7 @@ method equiv-to {
             $sp<defaulttype> = 0;
         }
     } else {
+        say "     - No daylight savings time" if $*TZDEBUG;
         $dstlen = 0;
         $sp<typecnt> = 1; # only standard time
         $sp<timecnt> = 0;
