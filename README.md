@@ -74,6 +74,12 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.4.2
+    * Updated to 2022g version of the database
+      * Mexico's Chihuahua state will follow DST
+      * Most of Greenland will not follow DST after March 2023
+      * Fixes to Colombia, Singapore, and Canada's historical data
+    * Bug fix for single offset timezones like GMT+5
   * 0.4.1
     * Updated to 2022f version of the database
       * Mexico and Fiji no longer observes DST in most areas
