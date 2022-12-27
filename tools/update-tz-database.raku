@@ -37,7 +37,7 @@ steps to be performed manually in case something is causing them problems.
 
 First we have a few constants:
 =end pod
-constant $updater-version = '0.6.1';
+constant $updater-version = '0.6.2';
 constant $module-version  = '0.4.1';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= TZ data download URL
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= TZ code download URL
@@ -139,7 +139,9 @@ processing is so fast anyways.
 
 
 print "Building zone info compiler (ZIC)... ";
-unless my $proc = run(<gcc -Wall update/data/zic.c -o update/bin/zic>, :cwd($*PROGRAM.parent.resolve), :err) {
+# -DHAVE_GETTEXT=0 is because MacOS gives strange results for this, see
+# documentation at <http://mm.icann.org/pipermail/tz/2022-October/032168.html>
+unless my $proc = run(<gcc -Wall update/data/zic.c -o update/bin/zic -DHAVE_GETTEXT=0>, :cwd($*PROGRAM.parent.resolve), :err) {
     say $r, "ERROR", $x;
     say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
     die "Please fix the above and try again.";
