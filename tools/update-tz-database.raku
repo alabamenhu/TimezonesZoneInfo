@@ -141,7 +141,7 @@ processing is so fast anyways.
 print "Building zone info compiler (ZIC)... ";
 # -DHAVE_GETTEXT=0 is because MacOS gives strange results for this, see
 # documentation at <http://mm.icann.org/pipermail/tz/2022-October/032168.html>
-unless my $proc = run(<gcc -Wall update/data/zic.c -o update/bin/zic -DHAVE_GETTEXT=0>, :cwd($*PROGRAM.parent.resolve), :err) {
+unless my $proc = run(<gcc -Wall -DHAVE_GETTEXT=0 update/data/zic.c -o update/bin/zic>, :cwd($*PROGRAM.parent.resolve), :err) {
     say $r, "ERROR", $x;
     say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
     die "Please fix the above and try again.";
