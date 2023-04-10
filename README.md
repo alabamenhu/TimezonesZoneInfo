@@ -74,6 +74,13 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.4.3
+    * Updated to 2023c version of the database incorporating changes from 2023a and 2023b
+      * Lebanon delays DST start (2023b) — but not actually (2023c)
+      * Egypt uses DST again (2023a)
+      * Greenland will still use DST (2023a)
+      * Palestine delays DST (2023a)
+      * Jordan starts DST earlier this year (2023a)
   * 0.4.2
     * Updated to 2022g version of the database
       * Mexico's Chihuahua state will follow DST

@@ -1,17 +1,16 @@
 {
-  "name": "Timezones::ZoneInfo",
-  "description": "A module providing timezone data and routines, based on IANA’s tz database and code",
-  "version": "0.4.2",
-  "meta-version": "0",
+  "auth": "zef:guifa",
   "authors": [
     "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
   ],
-  "auth": "zef:guifa",
-  "depends": [],
-  "build-depends": [],
-  "test-depends": [
-    "Test"
+  "build-depends": [
   ],
+  "depends": [
+  ],
+  "description": "A module providing timezone data and routines, based on IANA’s tz database and code",
+  "license": "CC0-1.0",
+  "meta-version": "0",
+  "name": "Timezones::ZoneInfo",
   "provides": {
     "CX::Warn::Timezones::UnknownID": "lib/CX/Warn/Timezones/UnknownID.rakumod",
     "Timezones::ZoneInfo": "lib/Timezones/ZoneInfo.rakumod",
@@ -23,6 +22,7 @@
     "Timezones::ZoneInfo::Time": "lib/Timezones/ZoneInfo/Time.rakumod",
     "Timezones::ZoneInfo::TransTimeInfo": "lib/Timezones/ZoneInfo/TransTimeInfo.rakumod"
   },
+  "raku": "6.*",
   "resources": [
     "TZif/Indian/Mauritius",
     "TZif/Indian/Chagos",
@@ -105,6 +105,7 @@
     "TZif/America/Santiago",
     "TZif/America/Guyana",
     "TZif/America/Rio_Branco",
+    "TZif/America/Ciudad_Juarez",
     "TZif/America/Nipigon",
     "TZif/America/Edmonton",
     "TZif/America/Port_of_Spain",
@@ -501,21 +502,20 @@
     "links",
     "zones",
     "posix-max",
-    "posix-min",
-    "posix-min",
-    "posix-max",
-    "TZif/America/Ciudad_Juarez"
+    "posix-min"
   ],
+  "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
   "support": {
     "source": "git://github.com/alabamenhu/TimezonesZoneInfo.git"
   },
-  "license": "CC0-1.0",
   "tags": [
     "timezones",
     "olson",
     "tz",
     "tzdb"
   ],
-  "source-url": "git://github.com/alabamenhu/TimezonesZoneInfo.git",
-  "raku": "6.*"
+  "test-depends": [
+    "Test"
+  ],
+  "version": "0.4.3"
 }
