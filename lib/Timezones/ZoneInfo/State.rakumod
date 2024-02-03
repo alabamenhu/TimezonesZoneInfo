@@ -203,9 +203,9 @@ method new (blob8 $tz, :$name) {
     # it is offset from GMT.
     # TYPES = tranisition time meta data (
     say "  4. Reading associated rules" if $*TZDEBUG;
-    my int8 @types;
+    my int8 @types[$TZ_MAX_TIMES];
     for ^$timecnt {
-        @types.push($tz.read-int8: $pos);
+        @types[$_] = $tz.read-int8: $pos;
         $pos += 1;
     }
     if $*TZDEBUG {
