@@ -74,6 +74,11 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.4.4
+    * Updated to 2024a version of the database 
+        * Kazakhstan unifies its timezones
+        * Palestine adjusts its DST transition
+        * Fixes to Vietnam, Canada and France's historical data
   * 0.4.3
     * Updated to 2023c version of the database incorporating changes from 2023a and 2023b
       * Lebanon delays DST start (2023b) — but not actually (2023c)
