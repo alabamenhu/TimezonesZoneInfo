@@ -74,6 +74,9 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.4.5
+    * Updated to 2025b version of the database
+        * Historical changes to numerous timezones in Mexico, Mongolia and Portugal
   * 0.4.4
     * Updated to 2024a version of the database 
         * Kazakhstan unifies its timezones

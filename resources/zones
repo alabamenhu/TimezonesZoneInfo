@@ -65,7 +65,6 @@ Asia/Kuching
 Indian/Maldives
 Asia/Hovd
 Asia/Ulaanbaatar
-Asia/Choibalsan
 Asia/Kathmandu
 Asia/Karachi
 Asia/Gaza
@@ -153,10 +152,6 @@ Etc/GMT+12
 GMT
 Europe/London
 Europe/Dublin
-WET
-CET
-MET
-EET
 Europe/Tirane
 Europe/Andorra
 Europe/Vienna
@@ -221,13 +216,6 @@ Europe/Zurich
 Europe/Istanbul
 Europe/Kyiv
 Factory
-EST
-MST
-HST
-EST5EDT
-CST6CDT
-MST7MDT
-PST8PDT
 America/New_York
 America/Chicago
 America/North_Dakota/Center
