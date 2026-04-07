@@ -9,7 +9,7 @@ has int32 $.year       is rw;      #= -∞..∞   (years since 1900; 1910 = 10; 
 has int16 $.weekday    is rw =  0; #=  0..6   (days since Sunday; Monday = 1)
 has int16 $.yearday    is rw =  0; #=  0..365 (Day index in year)
 has int16 $.dst        is rw = -1; #= -1..1   (0 no dst, 1 dst, -1 unknown/automatic)
-has int16 $.gmt-offset is rw =  0; #= -∞..∞   (offset of GMT, positive = east of GMT)
+has int32 $.gmt-offset is rw =  0; #= -∞..∞   (offset of GMT, positive = east of GMT)
 has str   $.tz-abbr    is rw = ""; #=         (Timezone abbreviation NULL AFTER localtime)
 
 multi method gist(::?CLASS:D:) {
