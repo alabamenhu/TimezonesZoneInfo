@@ -1,0 +1,19 @@
+use Timezones::ZoneInfo:auth<zef:guifa>;
+use Test;
+plan 4;
+
+# gmt-offset is stored as int16, which overflows for offsets >= 32768 seconds
+# (about 9 hours). Timezones like Australia/Sydney (AEDT, +11h = 39600s) and
+# Pacific/Auckland (NZDT, +13h = 46800s) are affected.
+
+my $epoch = DateTime.new('2024-01-15T12:00:00Z').posix; # January = southern summer
+
+my $sydney = timezone-data('Australia/Sydney');
+my $t = calendar-from-posix($epoch, $sydney);
+is $t.tz-abbr, 'AEDT', 'Sydney abbreviation is AEDT in January';
+is $t.gmt-offset, 39600, 'Sydney gmt-offset is 39600 (UTC+11)';
+
+my $auckland = timezone-data('Pacific/Auckland');
+my $t2 = calendar-from-posix($epoch, $auckland);
+is $t2.tz-abbr, 'NZDT', 'Auckland abbreviation is NZDT in January';
+is $t2.gmt-offset, 46800, 'Auckland gmt-offset is 46800 (UTC+13)';
