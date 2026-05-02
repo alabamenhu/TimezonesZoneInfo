@@ -3,7 +3,7 @@ A Raku module containing data (as well as some support routines) based on IANA's
 This module is not normally expected to be consumed on its own — it is designed to be as light weight as possible.
 Its intended use is for authors of various time-related tools. 
 
-Current IANA database version: **2022f** 
+Current IANA database version: **2026b** 
 
 When updating this module, ensure all modules that depend on it are recompiled.
 
@@ -74,6 +74,10 @@ The data comes from IANA's [**tz** database](https://www.iana.org/time-zones).
   * Tweak custom warning throwing
   
 # Version history
+  * 0.5.0
+    * Updated to 2026b version of the database
+    * Bug fix for large offsets (hat tip bduggan)
+    * Improvements to the updater script
   * 0.4.5
     * Updated to 2025b version of the database
         * Historical changes to numerous timezones in Mexico, Mongolia and Portugal
