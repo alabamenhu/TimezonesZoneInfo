@@ -91,4 +91,29 @@ subtest {
     is find-transition-time($t7, nuuk, :48hr), '2022-10-29T23:00:00', 'Calculate Nuuk 2022 fall back';
 }, 'Correct offsets with transition times';
 
+subtest {
+    # Reported by Brian Duggan (https://github.com/alabamenhu/TimezonesZoneInfo/pull/5)
+    # Bug was found in 0.4.1 and earlier.
+    #
+    # =============
+    #   gmt-offset is stored as int16, which overflows for offsets >= 32768 seconds
+    #   (about 9 hours). Timezones like Australia/Sydney (AEDT, +11h = 39600s) and
+    #   Pacific/Auckland (NZDT, +13h = 46800s) are affected.
+    # =============
+    #
+    # This was fixed by simply adjusting the size of the offset attribute to int32 from int16
+
+    my $epoch = DateTime.new('2024-01-15T12:00:00Z').posix; # January = southern summer
+
+    my $sydney = timezone-data('Australia/Sydney');
+    my $t1 = calendar-from-posix($epoch, $sydney);
+    is $t1.tz-abbr, 'AEDT', 'Sydney abbreviation is AEDT in January';
+    is $t1.gmt-offset, 39600, 'Sydney gmt-offset is 39600 (UTC+11)';
+
+    my $auckland = timezone-data('Pacific/Auckland');
+    my $t2 = calendar-from-posix($epoch, $auckland);
+    is $t2.tz-abbr, 'NZDT', 'Auckland abbreviation is NZDT in January';
+    is $t2.gmt-offset, 46800, 'Auckland gmt-offset is 46800 (UTC+13)';
+}, "Correct offsets when offsets don't fit in int16";
+
 done-testing;
