@@ -24,7 +24,6 @@ I have tried to account for the display of certain errors, but they might someti
 be LTA.  The most important things is to have all of the base modules and command
 line tools:
 
-=item C<LibCurl> (requires L<curl|https://curl.haxx.se/>)
 =item C<LibArchive> (requires L<libarchive|https://www.libarchive.org/>)
 =item L<gcc|https://gcc.gnu.org/>
 
@@ -37,8 +36,8 @@ steps to be performed manually in case something is causing them problems.
 
 First we have a few constants:
 =end pod
-constant $updater-version = '0.6.2';
-constant $module-version  = '0.4.1';
+constant $updater-version = '0.8.0';
+constant $module-version  = '0.5.0';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz'; #= TZ data download URL
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz'; #= TZ code download URL
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera
@@ -83,13 +82,43 @@ say header @header-choices.pick;
 =begin pod
 First we download the files from the IANA website.
 Thankfully these days it shouldn't take that long
+
+Because of some issues with LibCurl, the updater attempts
+to find an appropriate downloader, defaulting to wget.
 =end pod
-use LibCurl::Easy;
+my @download-commands = <curl wget>;
+my @available-downloaders;
+my $downloader;
+# Find available ones
+for @download-commands -> $cmd {
+    @available-downloaders.push($cmd)
+        if (run 'command', '-v', $cmd, :out).out.slurp
+}
+# Default to wget, otherwise take what we can get
+if 'wget' (elem) @available-downloaders {
+    $downloader = 'wget'
+} elsif @available-downloaders {
+    $downloader = @available-downloaders.roll
+} else {
+    die "No appropriate utility found to download tz files!\n"
+      ~ "Updater is compatible with the following utilities:\n"
+      ~ "  " ~ @download-commands.join(", ") ~ "\n"
+      ~ "Please install one to use this updater."
+}
+# Here are the quick one liners for downloading
+multi sub download ($URL, $download, $program where 'curl') {
+    run 'curl', '-s', '-o', $download, $URL;
+}
+multi sub download ($URL, $download, $program where 'wget') {
+    run 'wget', '-q', '-O', $download, $URL;
+}
+
+# Now actually download the files
 print "Downloading TZ data files (~400kB)... ";
-LibCurl::Easy.new(URL => TZ-DATA-URL, download => TZ-DATA-DL).perform;
+download TZ-DATA-URL, TZ-DATA-DL, $downloader;
 say $g, "OK", $x;
 print "Downloading TZ code files (~250kB)... ";
-LibCurl::Easy.new(URL => TZ-CODE-URL, download => TZ-CODE-DL).perform;
+download TZ-CODE-URL, TZ-CODE-DL, $downloader;
 say $g, "OK", $x;
 
 
@@ -104,21 +133,34 @@ grab only the files needed for its compilation. (Code for localtime
 was ported directly to Raku.)
 =end pod
 
+my $extractor = 'unzip';
+
 use Libarchive::Simple;
-
-print "Extracting TZ data files... ";
-  my $data = archive-read TZ-DATA-DL;
-  .extract(destpath => TZ-DATA-DIR)
-    for $data.grep(*.pathname ∈ TZ-ZONE-FILES | 'leapseconds' | 'backward' );
-say $g, "OK", $x;
-
-
-print "Extracting TZ code files... ";
-  my $code = archive-read TZ-CODE-DL;
-  .extract(destpath => TZ-DATA-DIR)
-    for $code.grep(*.pathname ∈ TZ-ZIC-FILES);
-say $g, "OK", $x;
-
+if $extractor eq 'libarchive' {
+    print "Extracting TZ data files... ";
+      my $data = archive-read TZ-DATA-DL;
+      .extract(destpath => TZ-DATA-DIR)
+        for $data.grep(*.pathname ∈ TZ-ZONE-FILES | 'leapseconds' | 'backward' );
+    say $g, "OK", $x;
+    print "Extracting TZ code files... ";
+      my $code = archive-read TZ-CODE-DL;
+      .extract(destpath => TZ-DATA-DIR)
+        for $code.grep(*.pathname ∈ TZ-ZIC-FILES);
+    say $g, "OK", $x;
+}elsif $extractor eq 'unzip' {
+    print "Extracting TZ data files... ";
+    my @data-list = ((run 'tar', '-tf', TZ-DATA-DL, :out).out.slurp, :close).lines;
+    for @data-list.grep(* ∈ TZ-ZONE-FILES | 'leapseconds' | 'backward') -> $file {
+        run 'tar', '-xf', TZ-DATA-DL, '-C', TZ-DATA-DIR, $file
+    }
+    say $g, "OK", $x;
+    print "Extracting TZ code files... ";
+    my @code-list = ((run 'tar', '-tf', TZ-CODE-DL, :out).out.slurp, :close).lines;
+    for @code-list.grep(* ∈ TZ-ZIC-FILES) -> $file {
+        run 'tar', '-xf', TZ-CODE-DL, '-C', TZ-DATA-DIR, $file
+    }
+    say $g, "OK", $x;
+}
 
 =begin pod
 Compiling immediately after extraction would result in an error because
